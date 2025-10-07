@@ -395,6 +395,71 @@
             font-size: 0.9em;
         }
 
+        .contact-form {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #B4D334;
+            background: #f9fffe;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .contact-form h5 {
+            color: #003057;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .contact-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e5ea;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .contact-input:focus {
+            outline: none;
+            border-color: #B4D334;
+        }
+
+        .contact-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn-modelo {
+            background: linear-gradient(135deg, #003057 0%, #004b7a 100%);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-modelo:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-modelo.ready {
+            background: linear-gradient(135deg, #B4D334 0%, #9bc228 100%);
+            color: #003057;
+            box-shadow: 0 4px 15px rgba(180,211,52,0.3);
+        }
+
         .address-count {
             display: inline-block;
             background: #B4D334;
@@ -419,7 +484,7 @@
     </style>
 </head>
 <body>
-    <div class="version">v2.0 - 2A IMMO</div>
+    <div class="version">v2.2 - Contacts Modelo</div>
 
     <div class="header">
         <h1>🏠 DPE Pro</h1>
@@ -479,7 +544,7 @@
     <div class="screen" id="resultsScreen">
         <div class="container">
             <button class="btn btn-export" onclick="exportToCSV()">
-                📥 Exporter en CSV
+                📥 Exporter pour Modelo InTouch
             </button>
             <div class="results-header" id="resultsHeader"></div>
             <div id="resultsList"></div>
@@ -672,6 +737,8 @@
             list.innerHTML = results.map((dpe, index) => {
                 const dpeId = `${dpe.adresse_brut}_${dpe.date_etablissement_dpe}`;
                 const savedNote = notesData[dpeId] || {};
+                const savedContact = savedNote.contact || {};
+                const isContactComplete = savedContact.nom && savedContact.prenom && savedContact.email;
                 
                 return `
                 <div class="dpe-card" id="dpe-${index}">
@@ -712,6 +779,41 @@
                                   id="note-${index}">${savedNote.note || ''}</textarea>
                         <div class="note-saved" id="saved-${index}">✓ Note sauvegardée</div>
                     </div>
+                    <div class="contact-form">
+                        <h5>👤 Coordonnées propriétaire</h5>
+                        <div class="contact-row">
+                            <input type="text" 
+                                   class="contact-input" 
+                                   placeholder="Nom *"
+                                   value="${savedContact.nom || ''}"
+                                   onchange="saveContact('${dpeId}', 'nom', this.value, ${index})"
+                                   id="nom-${index}">
+                            <input type="text" 
+                                   class="contact-input" 
+                                   placeholder="Prénom *"
+                                   value="${savedContact.prenom || ''}"
+                                   onchange="saveContact('${dpeId}', 'prenom', this.value, ${index})"
+                                   id="prenom-${index}">
+                        </div>
+                        <input type="email" 
+                               class="contact-input" 
+                               placeholder="Email *"
+                               value="${savedContact.email || ''}"
+                               onchange="saveContact('${dpeId}', 'email', this.value, ${index})"
+                               id="email-${index}">
+                        <input type="tel" 
+                               class="contact-input" 
+                               placeholder="Téléphone"
+                               value="${savedContact.telephone || ''}"
+                               onchange="saveContact('${dpeId}', 'telephone', this.value, ${index})"
+                               id="tel-${index}">
+                        <button class="btn-modelo ${isContactComplete ? 'ready' : ''}" 
+                                id="btn-modelo-${index}"
+                                onclick="exportSingleToModelo(${index})"
+                                ${isContactComplete ? '' : 'disabled'}>
+                            ${isContactComplete ? '✅ Envoyer à Modelo InTouch' : '📤 Envoyer à Modelo (remplissez Nom, Prénom, Email)'}
+                        </button>
+                    </div>
                 </div>
             `}).join('');
 
@@ -725,7 +827,114 @@
             }).filter(a => a);
         }
 
-        function setStatus(dpeId, status, index) {
+        // Sauvegarder les coordonnées d'un contact
+        function saveContact(dpeId, field, value, index) {
+            if (!notesData[dpeId]) {
+                notesData[dpeId] = {};
+            }
+            if (!notesData[dpeId].contact) {
+                notesData[dpeId].contact = {};
+            }
+            notesData[dpeId].contact[field] = value;
+            saveNotes();
+            
+            // Vérifier si tous les champs obligatoires sont remplis
+            checkContactComplete(dpeId, index);
+        }
+
+        function checkContactComplete(dpeId, index) {
+            const contact = notesData[dpeId]?.contact || {};
+            const isComplete = contact.nom && contact.prenom && contact.email;
+            
+            const btn = document.getElementById(`btn-modelo-${index}`);
+            if (btn) {
+                if (isComplete) {
+                    btn.disabled = false;
+                    btn.classList.add('ready');
+                    btn.innerHTML = '✅ Envoyer à Modelo InTouch';
+                } else {
+                    btn.disabled = true;
+                    btn.classList.remove('ready');
+                    btn.innerHTML = '📤 Envoyer à Modelo (remplissez Nom, Prénom, Email)';
+                }
+            }
+        }
+
+        function exportSingleToModelo(index) {
+            const dpe = currentData[index];
+            if (!dpe) {
+                alert('Erreur : données introuvables');
+                return;
+            }
+
+            const dpeId = `${dpe.adresse_brut}_${dpe.date_etablissement_dpe}`;
+            const saved = notesData[dpeId] || {};
+            const contact = saved.contact || {};
+
+            if (!contact.nom || !contact.prenom || !contact.email) {
+                alert('⚠️ Veuillez remplir au minimum :\n- Nom\n- Prénom\n- Email');
+                return;
+            }
+
+            // Headers CSV - Format Modelo InTouch
+            const headers = [
+                'Nom',
+                'Prénom',
+                'Email',
+                'Téléphone',
+                'Adresse',
+                'Code Postal',
+                'Commune',
+                'Classe DPE',
+                'GES',
+                'Surface (m²)',
+                'Type Bien',
+                'Date DPE',
+                'Statut Prospection',
+                'Notes'
+            ];
+
+            // Une seule ligne de données
+            const row = [
+                contact.nom || '',
+                contact.prenom || '',
+                contact.email || '',
+                contact.telephone || '',
+                dpe.adresse_brut || '',
+                dpe.code_postal_brut || '',
+                dpe.commune || '',
+                dpe.classe_consommation_energie || 'N/A',
+                dpe.classe_estimation_ges || 'N/A',
+                dpe.surface_habitable_logement || '',
+                dpe.type_batiment || '',
+                dpe.date_etablissement_dpe || '',
+                getStatusLabel(saved.status) || '',
+                (saved.note || '').replace(/"/g, '""')
+            ].map(cell => `"${cell}"`).join(',');
+
+            // Créer le CSV
+            const csv = [headers.join(','), row].join('\n');
+            
+            // Télécharger
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const date = new Date().toISOString().split('T')[0];
+            const filename = `Contact_${contact.nom}_${contact.prenom}_${date}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Message de confirmation
+            setTimeout(() => {
+                alert(`✅ Contact exporté !\n\n👤 ${contact.prenom} ${contact.nom}\n📧 ${contact.email}\n📍 ${dpe.adresse_brut}\n\n➡️ Importez dans Modelo InTouch :\nCAMPAGNES → Contacts → Importer CSV`);
+            }, 300);
+        }
             if (!notesData[dpeId]) {
                 notesData[dpeId] = {};
             }
@@ -789,18 +998,22 @@
                 return;
             }
 
-            // Headers CSV
+            // Headers CSV - Format Modelo InTouch + Infos DPE
             const headers = [
+                'Nom',
+                'Prénom',
+                'Email',
+                'Téléphone',
                 'Adresse',
                 'Code Postal',
                 'Commune',
                 'Classe DPE',
                 'GES',
                 'Surface (m²)',
-                'Type',
+                'Type Bien',
                 'Date DPE',
-                'Statut',
-                'Note'
+                'Statut Prospection',
+                'Notes'
             ];
 
             // Données
@@ -809,6 +1022,10 @@
                 const saved = notesData[dpeId] || {};
                 
                 return [
+                    '', // Nom - À REMPLIR après prospection
+                    '', // Prénom - À REMPLIR après prospection
+                    '', // Email - À REMPLIR après prospection
+                    '', // Téléphone - À REMPLIR après prospection
                     dpe.adresse_brut || '',
                     dpe.code_postal_brut || '',
                     dpe.commune || '',
@@ -835,11 +1052,16 @@
             const date = new Date().toISOString().split('T')[0];
             
             link.setAttribute('href', url);
-            link.setAttribute('download', `DPE_${codePostal}_${annee}_${date}.csv`);
+            link.setAttribute('download', `DPE_Modelo_${codePostal}_${annee}_${date}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            
+            // Message explicatif
+            setTimeout(() => {
+                alert('✅ Export réussi !\n\n📋 Format Modelo InTouch :\n\n1️⃣ Ouvrez le CSV dans Excel/Numbers\n2️⃣ Remplissez Nom, Prénom, Email, Téléphone après prospection\n3️⃣ Importez dans Modelo InTouch → Campagnes → Contacts → Importer CSV\n\n💡 Les 4 premières colonnes sont vides exprès - à remplir par vous !');
+            }, 500);
         }
 
         function createRoute() {
