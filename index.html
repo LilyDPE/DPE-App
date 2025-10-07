@@ -430,7 +430,8 @@
                 <div class="route-card">
                     <h4>🚗 Actions rapides</h4>
                     <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                        💡 Astuce : Utilisez les boutons individuels ci-dessous pour ouvrir chaque itinéraire
+                        💡 Cliquez sur un itinéraire ci-dessous pour l'ouvrir dans Google Maps.<br>
+                        📱 Pour revenir : relancez DPE Pro depuis votre écran d'accueil
                     </p>
                     <button class="btn btn-primary" onclick="openWaze()">
                         Ouvrir dans Waze
@@ -644,9 +645,9 @@
                     <div class="route-card">
                         <h4>🚗 Itinéraire ${i + 1}/${numRoutes} <span class="address-count">${start + 1}-${end}</span></h4>
                         <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">✨ Tri intelligent + optimisation Google Maps</p>
-                        <a href="${url}" target="_blank" class="btn btn-success" style="text-decoration: none;">
+                        <button class="btn btn-success" onclick="openRoute('${url.replace(/'/g, "\\'")}')">
                             Ouvrir l'itinéraire ${i + 1}
-                        </a>
+                        </button>
                     </div>
                 `;
             }
@@ -720,6 +721,12 @@
                 number: null,
                 street: parts.toLowerCase()
             };
+        }
+
+        function openRoute(url) {
+            // Ouvrir l'itinéraire dans Google Maps
+            // L'app DPE Pro va se fermer, pour revenir : relancez DPE Pro depuis l'écran d'accueil
+            window.location.href = url;
         }
 
         function openAllRoutes() {
