@@ -8,8 +8,8 @@
     <meta name="apple-mobile-web-app-title" content="DPE Pro">
     <link rel="apple-touch-icon" href="icon-512.png">
     <link rel="manifest" href="manifest.webmanifest">
-    <meta name="theme-color" content="#667eea">
-    <title>DPE Prospection Pro</title>
+    <meta name="theme-color" content="#003057">
+    <title>DPE Pro - 2A IMMO</title>
     <style>
         * {
             margin: 0;
@@ -20,19 +20,19 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f5f5f7;
+            background: #f0f4f8;
             overflow-x: hidden;
             padding-bottom: 70px;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #003057 0%, #004b7a 100%);
             color: white;
             padding: 20px 20px 15px;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
         .header h1 {
@@ -63,7 +63,8 @@
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 15px rgba(0,48,87,0.1);
+            border-top: 3px solid #B4D334;
         }
 
         .form-group {
@@ -74,7 +75,7 @@
             display: block;
             font-weight: 600;
             margin-bottom: 8px;
-            color: #333;
+            color: #003057;
             font-size: 0.95em;
         }
 
@@ -90,7 +91,7 @@
 
         input:focus, select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #B4D334;
             background: white;
         }
 
@@ -110,9 +111,9 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #003057 0%, #004b7a 100%);
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(0,48,87,0.3);
         }
 
         .btn-primary:active {
@@ -120,9 +121,17 @@
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+            background: linear-gradient(135deg, #B4D334 0%, #9bc228 100%);
+            color: #003057;
+            box-shadow: 0 4px 15px rgba(180,211,52,0.3);
+            font-weight: 700;
+        }
+
+        .btn-export {
+            background: white;
+            color: #003057;
+            border: 2px solid #B4D334;
+            margin-bottom: 15px;
         }
 
         .loading {
@@ -133,7 +142,7 @@
 
         .spinner {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #B4D334;
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -151,12 +160,13 @@
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 15px rgba(0,48,87,0.1);
+            border-top: 3px solid #B4D334;
         }
 
         .results-header h3 {
             font-size: 1.3em;
-            color: #667eea;
+            color: #003057;
             margin-bottom: 10px;
         }
 
@@ -179,8 +189,8 @@
             border-radius: 15px;
             padding: 15px;
             margin-bottom: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0,48,87,0.08);
+            border-left: 4px solid #B4D334;
         }
 
         .dpe-header {
@@ -194,7 +204,7 @@
         .dpe-address {
             font-weight: 600;
             font-size: 1.05em;
-            color: #1d1d1f;
+            color: #003057;
             flex: 1;
         }
 
@@ -228,7 +238,56 @@
         }
 
         .info-item strong {
-            color: #333;
+            color: #003057;
+        }
+
+        .dpe-notes {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .note-status {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            border: 2px solid #ddd;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .status-btn.active {
+            background: #B4D334;
+            color: #003057;
+            border-color: #B4D334;
+            font-weight: 600;
+        }
+
+        .note-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e5ea;
+            border-radius: 8px;
+            font-size: 0.9em;
+            resize: vertical;
+            min-height: 60px;
+            margin-top: 8px;
+        }
+
+        .note-saved {
+            font-size: 0.85em;
+            color: #B4D334;
+            margin-top: 5px;
+            display: none;
         }
 
         .bottom-nav {
@@ -240,7 +299,7 @@
             display: flex;
             justify-content: space-around;
             padding: 10px 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 -2px 10px rgba(0,48,87,0.1);
             z-index: 100;
         }
 
@@ -256,7 +315,7 @@
         }
 
         .nav-item.active {
-            color: #667eea;
+            color: #B4D334;
         }
 
         .nav-icon {
@@ -289,16 +348,17 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
+            background: linear-gradient(135deg, #B4D334 0%, #9bc228 100%);
+            color: #003057;
             border: none;
             font-size: 1.5em;
-            box-shadow: 0 4px 20px rgba(17, 153, 142, 0.4);
+            box-shadow: 0 4px 20px rgba(180,211,52,0.4);
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 99;
+            font-weight: 700;
         }
 
         .fab.show {
@@ -314,11 +374,12 @@
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 15px rgba(0,48,87,0.1);
+            border-left: 4px solid #B4D334;
         }
 
         .route-card h4 {
-            color: #667eea;
+            color: #003057;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
@@ -336,16 +397,30 @@
 
         .address-count {
             display: inline-block;
-            background: #667eea;
-            color: white;
+            background: #B4D334;
+            color: #003057;
             padding: 2px 8px;
             border-radius: 10px;
             font-size: 0.85em;
             margin-left: 5px;
+            font-weight: 700;
+        }
+
+        .version {
+            position: fixed;
+            bottom: 75px;
+            left: 10px;
+            font-size: 0.7em;
+            color: #999;
+            background: rgba(255,255,255,0.9);
+            padding: 4px 8px;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
+    <div class="version">v2.0 - 2A IMMO</div>
+
     <div class="header">
         <h1>🏠 DPE Pro</h1>
         <p>Prospection immobilière intelligente</p>
@@ -363,7 +438,7 @@
                     <label for="annee">📅 Année</label>
                     <select id="annee">
                         <option value="2025">2025</option>
-                        <option value="2024">2024</option>
+                        <option value="2024" selected>2024</option>
                         <option value="2023">2023</option>
                         <option value="2022">2022</option>
                         <option value="2021">2021</option>
@@ -403,6 +478,9 @@
 
     <div class="screen" id="resultsScreen">
         <div class="container">
+            <button class="btn btn-export" onclick="exportToCSV()">
+                📥 Exporter en CSV
+            </button>
             <div class="results-header" id="resultsHeader"></div>
             <div id="resultsList"></div>
         </div>
@@ -466,6 +544,27 @@
         let currentData = [];
         let currentAddresses = [];
         let sortedAddresses = [];
+        let notesData = {};
+
+        // Charger les notes sauvegardées
+        function loadNotes() {
+            const saved = localStorage.getItem('dpe_notes');
+            if (saved) {
+                try {
+                    notesData = JSON.parse(saved);
+                } catch (e) {
+                    notesData = {};
+                }
+            }
+        }
+
+        // Sauvegarder les notes
+        function saveNotes() {
+            localStorage.setItem('dpe_notes', JSON.stringify(notesData));
+        }
+
+        // Initialiser
+        loadNotes();
 
         function switchScreen(screen) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -570,8 +669,12 @@
             `;
 
             const list = document.getElementById('resultsList');
-            list.innerHTML = results.map(dpe => `
-                <div class="dpe-card">
+            list.innerHTML = results.map((dpe, index) => {
+                const dpeId = `${dpe.adresse_brut}_${dpe.date_etablissement_dpe}`;
+                const savedNote = notesData[dpeId] || {};
+                
+                return `
+                <div class="dpe-card" id="dpe-${index}">
                     <div class="dpe-header">
                         <div class="dpe-address">📍 ${dpe.adresse_brut || 'Adresse non renseignée'}</div>
                         <span class="classe-badge classe-${dpe.classe_consommation_energie || 'NA'}">
@@ -584,8 +687,33 @@
                         <div class="info-item">🌡️ GES: <strong>${dpe.classe_estimation_ges || 'N/A'}</strong></div>
                         <div class="info-item">🏗️ <strong>${dpe.type_batiment || 'N/A'}</strong></div>
                     </div>
+                    <div class="dpe-notes">
+                        <div class="note-status">
+                            <button class="status-btn ${savedNote.status === 'to_visit' ? 'active' : ''}" 
+                                    onclick="setStatus('${dpeId}', 'to_visit', ${index})">
+                                📍 À visiter
+                            </button>
+                            <button class="status-btn ${savedNote.status === 'visited' ? 'active' : ''}" 
+                                    onclick="setStatus('${dpeId}', 'visited', ${index})">
+                                ✅ Visité
+                            </button>
+                            <button class="status-btn ${savedNote.status === 'interested' ? 'active' : ''}" 
+                                    onclick="setStatus('${dpeId}', 'interested', ${index})">
+                                ⭐ Intéressé
+                            </button>
+                            <button class="status-btn ${savedNote.status === 'not_interested' ? 'active' : ''}" 
+                                    onclick="setStatus('${dpeId}', 'not_interested', ${index})">
+                                ❌ Pas intéressé
+                            </button>
+                        </div>
+                        <textarea class="note-input" 
+                                  placeholder="💬 Ajouter une note..."
+                                  onchange="saveNote('${dpeId}', this.value, ${index})"
+                                  id="note-${index}">${savedNote.note || ''}</textarea>
+                        <div class="note-saved" id="saved-${index}">✓ Note sauvegardée</div>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
 
             document.getElementById('fab').classList.add('show');
 
@@ -597,6 +725,123 @@
             }).filter(a => a);
         }
 
+        function setStatus(dpeId, status, index) {
+            if (!notesData[dpeId]) {
+                notesData[dpeId] = {};
+            }
+            
+            // Toggle status
+            if (notesData[dpeId].status === status) {
+                delete notesData[dpeId].status;
+            } else {
+                notesData[dpeId].status = status;
+            }
+            
+            saveNotes();
+            
+            // Update UI
+            const card = document.getElementById(`dpe-${index}`);
+            const buttons = card.querySelectorAll('.status-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (notesData[dpeId].status) {
+                buttons.forEach(btn => {
+                    if (btn.textContent.includes(getStatusLabel(notesData[dpeId].status))) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            showSaved(index);
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'to_visit': 'À visiter',
+                'visited': 'Visité',
+                'interested': 'Intéressé',
+                'not_interested': 'Pas intéressé'
+            };
+            return labels[status] || '';
+        }
+
+        function saveNote(dpeId, noteText, index) {
+            if (!notesData[dpeId]) {
+                notesData[dpeId] = {};
+            }
+            notesData[dpeId].note = noteText;
+            notesData[dpeId].date = new Date().toISOString();
+            saveNotes();
+            showSaved(index);
+        }
+
+        function showSaved(index) {
+            const savedEl = document.getElementById(`saved-${index}`);
+            savedEl.style.display = 'block';
+            setTimeout(() => {
+                savedEl.style.display = 'none';
+            }, 2000);
+        }
+
+        function exportToCSV() {
+            if (currentData.length === 0) {
+                alert('Aucune donnée à exporter');
+                return;
+            }
+
+            // Headers CSV
+            const headers = [
+                'Adresse',
+                'Code Postal',
+                'Commune',
+                'Classe DPE',
+                'GES',
+                'Surface (m²)',
+                'Type',
+                'Date DPE',
+                'Statut',
+                'Note'
+            ];
+
+            // Données
+            const rows = currentData.map(dpe => {
+                const dpeId = `${dpe.adresse_brut}_${dpe.date_etablissement_dpe}`;
+                const saved = notesData[dpeId] || {};
+                
+                return [
+                    dpe.adresse_brut || '',
+                    dpe.code_postal_brut || '',
+                    dpe.commune || '',
+                    dpe.classe_consommation_energie || 'N/A',
+                    dpe.classe_estimation_ges || 'N/A',
+                    dpe.surface_habitable_logement || '',
+                    dpe.type_batiment || '',
+                    dpe.date_etablissement_dpe || '',
+                    getStatusLabel(saved.status) || '',
+                    (saved.note || '').replace(/"/g, '""')
+                ].map(cell => `"${cell}"`).join(',');
+            });
+
+            // Créer le CSV
+            const csv = [headers.join(','), ...rows].join('\n');
+            
+            // Télécharger
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const codePostal = document.getElementById('codePostal').value;
+            const annee = document.getElementById('annee').value;
+            const date = new Date().toISOString().split('T')[0];
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `DPE_${codePostal}_${annee}_${date}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function createRoute() {
             if (currentAddresses.length === 0) {
                 alert('Recherchez d\'abord des DPE');
@@ -606,7 +851,6 @@
             document.getElementById('emptyRoute').style.display = 'none';
             document.getElementById('routeContent').style.display = 'block';
 
-            // Tri simple et rapide des adresses
             sortedAddresses = sortAddressesSmart(currentAddresses);
             
             document.getElementById('routeTotal').textContent = sortedAddresses.length;
@@ -624,7 +868,6 @@
             const linksDiv = document.getElementById('routeLinks');
             linksDiv.innerHTML = '';
 
-            // Création des itinéraires avec optimisation Google Maps
             for (let i = 0; i < numRoutes; i++) {
                 const start = i * 9;
                 const end = Math.min(start + 9, sortedAddresses.length);
@@ -656,7 +899,6 @@
         }
 
         function sortAddressesSmart(addresses) {
-            // Tri intelligent sans géocodage - rapide et efficace !
             const addressesWithParsed = addresses.map(addr => {
                 const parsed = parseAddress(addr);
                 return {
@@ -666,7 +908,6 @@
                 };
             });
 
-            // Grouper par rue
             const streetGroups = {};
             addressesWithParsed.forEach(addr => {
                 const streetKey = addr.street || addr.original;
@@ -676,7 +917,6 @@
                 streetGroups[streetKey].push(addr);
             });
 
-            // Trier les numéros dans chaque rue
             Object.keys(streetGroups).forEach(street => {
                 streetGroups[street].sort((a, b) => {
                     if (a.number && b.number) {
@@ -686,10 +926,8 @@
                 });
             });
 
-            // Trier les rues alphabétiquement
             const sortedStreets = Object.keys(streetGroups).sort();
 
-            // Aplatir le résultat
             const sortedResult = [];
             sortedStreets.forEach(street => {
                 streetGroups[street].forEach(addr => {
@@ -701,10 +939,7 @@
         }
 
         function parseAddress(address) {
-            // Extraire le numéro et le nom de rue
             const parts = address.split(',')[0].trim();
-            
-            // Regex pour capturer le numéro en début d'adresse
             const numberMatch = parts.match(/^(\d+[\s\-]*[a-zA-Z]?)\s+(.+)/);
             
             if (numberMatch) {
@@ -716,7 +951,6 @@
                 };
             }
             
-            // Si pas de numéro trouvé, utiliser l'adresse complète comme nom de rue
             return {
                 number: null,
                 street: parts.toLowerCase()
@@ -724,8 +958,6 @@
         }
 
         function openRoute(url) {
-            // Ouvrir l'itinéraire dans Google Maps
-            // L'app DPE Pro va se fermer, pour revenir : relancez DPE Pro depuis l'écran d'accueil
             window.location.href = url;
         }
 
@@ -770,9 +1002,7 @@
             if (currentAddresses.length === 0) return;
             
             const addr = encodeURIComponent(currentAddresses[0]);
-            window.open(`https://waze.com/ul?q=${addr}&navigate=yes`, '_blank');
-            
-            alert(`✅ Waze ouvert !\n\nVous pouvez parcourir toutes les adresses une par une dans Waze.`);
+            window.location.href = `https://waze.com/ul?q=${addr}&navigate=yes`;
         }
 
         document.getElementById('codePostal').addEventListener('keypress', (e) => {
