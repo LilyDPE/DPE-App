@@ -429,9 +429,9 @@
 
                 <div class="route-card">
                     <h4>🚗 Actions rapides</h4>
-                    <button class="btn btn-success" style="margin-bottom: 10px;" onclick="openAllRoutes()">
-                        Ouvrir dans Google Maps
-                    </button>
+                    <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                        💡 Astuce : Utilisez les boutons individuels ci-dessous pour ouvrir chaque itinéraire
+                    </p>
                     <button class="btn btn-primary" onclick="openWaze()">
                         Ouvrir dans Waze
                     </button>
@@ -644,9 +644,9 @@
                     <div class="route-card">
                         <h4>🚗 Itinéraire ${i + 1}/${numRoutes} <span class="address-count">${start + 1}-${end}</span></h4>
                         <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">✨ Tri intelligent + optimisation Google Maps</p>
-                        <button class="btn btn-success" onclick="window.open('${url}', '_blank')">
+                        <a href="${url}" target="_blank" class="btn btn-success" style="text-decoration: none;">
                             Ouvrir l'itinéraire ${i + 1}
-                        </button>
+                        </a>
                     </div>
                 `;
             }
