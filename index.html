@@ -635,14 +635,14 @@
                 if (waypoints) url += `&waypoints=${waypoints}`;
                 url += '&travelmode=driving';
 
-                linksDiv.innerHTML += `
+                linksDiv.innerHTML += 
                     <div class="route-card">
-                        <h4>🚗 Itinéraire ${i + 1}/${numRoutes} <span class="address-count">${start + 1}-${end}</span></h4>
-                        <button class="btn btn-success" onclick="window.open('${url}', '_blank')">
-                            Ouvrir l'itinéraire ${i + 1}
-                        </button>
-                    </div>
-                `;
+                    <h4>🚗 Itinéraire ${i + 1}/${numRoutes} <span class="address-count">${start + 1}-${end}</span></h4>
+                    <a class="btn btn-success" href="${url}" target="_blank" rel="noopener noreferrer">
+                        Ouvrir l'itinéraire ${i + 1}
+                    </a>
+                </div>
+            ;
             }
 
             switchScreen('route');
