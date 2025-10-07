@@ -1,4 +1,602 @@
-function createRoute() {
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DPE Pro">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#667eea">
+    <title>DPE Prospection Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f7;
+            overflow-x: hidden;
+            padding-bottom: 70px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 20px 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .container {
+            padding: 15px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .search-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e5ea;
+            border-radius: 12px;
+            font-size: 16px;
+            background: #f9f9f9;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+
+        .results-header h3 {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .stat-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .dpe-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-left: 4px solid #667eea;
+        }
+
+        .dpe-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .dpe-address {
+            font-weight: 600;
+            font-size: 1.05em;
+            color: #1d1d1f;
+            flex: 1;
+        }
+
+        .classe-badge {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 1em;
+            flex-shrink: 0;
+        }
+
+        .classe-A { background: #00a651; color: white; }
+        .classe-B { background: #50b748; color: white; }
+        .classe-C { background: #c8d200; color: white; }
+        .classe-D { background: #fef200; color: black; }
+        .classe-E { background: #fdb913; color: black; }
+        .classe-F { background: #f36e21; color: white; }
+        .classe-G { background: #e31e24; color: white; }
+        .classe-NA { background: #999; color: white; }
+
+        .dpe-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+
+        .info-item {
+            color: #666;
+        }
+
+        .info-item strong {
+            color: #333;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+            color: #8e8e93;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 1.5em;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .nav-label {
+            font-size: 0.7em;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            font-size: 1.5em;
+            box-shadow: 0 4px 20px rgba(17, 153, 142, 0.4);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+        }
+
+        .fab.show {
+            display: flex;
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        .route-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+
+        .route-card h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        .address-count {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏠 DPE Pro</h1>
+        <p>Prospection immobilière intelligente</p>
+    </div>
+
+    <div class="screen active" id="searchScreen">
+        <div class="container">
+            <div class="search-card">
+                <div class="form-group">
+                    <label for="codePostal">📍 Code Postal</label>
+                    <input type="text" id="codePostal" value="76260" placeholder="Ex: 76260" inputmode="numeric">
+                </div>
+
+                <div class="form-group">
+                    <label for="annee">📅 Année</label>
+                    <select id="annee">
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mois">🗓️ Mois (optionnel)</label>
+                    <select id="mois">
+                        <option value="">Tous les mois</option>
+                        <option value="01">Janvier</option>
+                        <option value="02">Février</option>
+                        <option value="03">Mars</option>
+                        <option value="04">Avril</option>
+                        <option value="05">Mai</option>
+                        <option value="06">Juin</option>
+                        <option value="07">Juillet</option>
+                        <option value="08">Août</option>
+                        <option value="09">Septembre</option>
+                        <option value="10">Octobre</option>
+                        <option value="11">Novembre</option>
+                        <option value="12">Décembre</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" onclick="searchDPE()">
+                    🔍 Rechercher les DPE
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Recherche en cours...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen" id="resultsScreen">
+        <div class="container">
+            <div class="results-header" id="resultsHeader"></div>
+            <div id="resultsList"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="routeScreen">
+        <div class="container">
+            <div class="empty-state" id="emptyRoute">
+                <div class="empty-icon">🗺️</div>
+                <h3>Aucun itinéraire</h3>
+                <p>Recherchez d'abord des DPE</p>
+            </div>
+            <div id="routeContent" style="display: none;">
+                <div class="route-card">
+                    <h4>📊 Récapitulatif</h4>
+                    <p><strong id="routeTotal">0</strong> adresses à visiter</p>
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;" id="routeInfo"></p>
+                </div>
+
+                <div class="alert" id="routeAlert" style="display: none;">
+                    ⚠️ Google Maps limite à 10 destinations.<br>
+                    Je vais créer plusieurs itinéraires !
+                </div>
+
+                <div class="route-card">
+                    <h4>🚗 Actions rapides</h4>
+                    <button class="btn btn-success" style="margin-bottom: 10px;" onclick="openAllRoutes()">
+                        Ouvrir dans Google Maps
+                    </button>
+                    <button class="btn btn-primary" onclick="openWaze()">
+                        Ouvrir dans Waze
+                    </button>
+                </div>
+
+                <div id="routeLinks"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="fab" id="fab" onclick="createRoute()">
+        🗺️
+    </button>
+
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchScreen('search')">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">Recherche</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('results')">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Résultats</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('route')">
+            <span class="nav-icon">🗺️</span>
+            <span class="nav-label">Itinéraire</span>
+        </button>
+    </div>
+
+    <script>
+        let currentData = [];
+        let currentAddresses = [];
+        let sortedAddresses = [];
+
+        function switchScreen(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            if (screen === 'search') {
+                document.getElementById('searchScreen').classList.add('active');
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+            } else if (screen === 'results') {
+                document.getElementById('resultsScreen').classList.add('active');
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+            } else if (screen === 'route') {
+                document.getElementById('routeScreen').classList.add('active');
+                document.querySelectorAll('.nav-item')[2].classList.add('active');
+            }
+        }
+
+        async function searchDPE() {
+            const codePostal = document.getElementById('codePostal').value.trim();
+            const annee = document.getElementById('annee').value;
+            const mois = document.getElementById('mois').value;
+            
+            if (!codePostal) {
+                alert('Veuillez entrer un code postal');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+
+            const url = 'https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines';
+            
+            let dateDebut, dateFin;
+            
+            if (mois) {
+                const lastDay = new Date(annee, parseInt(mois), 0).getDate();
+                dateDebut = `${annee}-${mois}-01`;
+                dateFin = `${annee}-${mois}-${lastDay}`;
+            } else {
+                dateDebut = annee === '2021' ? '2021-07-01' : `${annee}-01-01`;
+                dateFin = `${annee}-12-31`;
+            }
+            
+            const params = new URLSearchParams({
+                size: 1000,
+                qs: `code_postal_brut:${codePostal} AND date_etablissement_dpe:[${dateDebut} TO ${dateFin}]`
+            });
+
+            try {
+                const response = await fetch(`${url}?${params}`);
+                const data = await response.json();
+                currentData = data.results || [];
+                
+                displayResults(data, codePostal, annee, mois);
+                switchScreen('results');
+                
+            } catch (error) {
+                alert('Erreur lors de la recherche: ' + error.message);
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayResults(data, codePostal, annee, mois) {
+            const total = data.total || 0;
+            const results = data.results || [];
+
+            const moisNoms = {
+                '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril',
+                '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août',
+                '09': 'Septembre', '10': 'Octobre', '11': 'Novembre', '12': 'Décembre'
+            };
+
+            const header = document.getElementById('resultsHeader');
+            
+            if (total === 0) {
+                const periode = mois ? `${moisNoms[mois]} ${annee}` : annee;
+                header.innerHTML = `
+                    <h3>Aucun résultat</h3>
+                    <p>Aucun DPE trouvé pour ${codePostal} en ${periode}</p>
+                `;
+                document.getElementById('resultsList').innerHTML = '';
+                document.getElementById('fab').classList.remove('show');
+                return;
+            }
+
+            const classeCount = {};
+            results.forEach(dpe => {
+                const classe = dpe.classe_consommation_energie || 'N/A';
+                classeCount[classe] = (classeCount[classe] || 0) + 1;
+            });
+
+            const periode = mois ? `${moisNoms[mois]} ${annee}` : annee;
+            header.innerHTML = `
+                <h3>${total} DPE trouvé${total > 1 ? 's' : ''}</h3>
+                <p>${codePostal} - ${periode}</p>
+                <div class="stats">
+                    ${Object.entries(classeCount).map(([classe, count]) => `
+                        <span class="stat-badge classe-${classe === 'N/A' ? 'NA' : classe}">${classe}: ${count}</span>
+                    `).join('')}
+                </div>
+            `;
+
+            const list = document.getElementById('resultsList');
+            list.innerHTML = results.map(dpe => `
+                <div class="dpe-card">
+                    <div class="dpe-header">
+                        <div class="dpe-address">📍 ${dpe.adresse_brut || 'Adresse non renseignée'}</div>
+                        <span class="classe-badge classe-${dpe.classe_consommation_energie || 'NA'}">
+                            ${dpe.classe_consommation_energie || 'N/A'}
+                        </span>
+                    </div>
+                    <div class="dpe-info">
+                        <div class="info-item">📅 <strong>${dpe.date_etablissement_dpe || 'N/A'}</strong></div>
+                        <div class="info-item">📐 <strong>${dpe.surface_habitable_logement || 'N/A'} m²</strong></div>
+                        <div class="info-item">🌡️ GES: <strong>${dpe.classe_estimation_ges || 'N/A'}</strong></div>
+                        <div class="info-item">🏗️ <strong>${dpe.type_batiment || 'N/A'}</strong></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('fab').classList.add('show');
+
+            currentAddresses = results.map(dpe => {
+                let addr = dpe.adresse_brut || '';
+                if (dpe.code_postal_brut) addr += ', ' + dpe.code_postal_brut;
+                if (dpe.commune) addr += ' ' + dpe.commune;
+                return addr;
+            }).filter(a => a);
+        }
+
+        function createRoute() {
             if (currentAddresses.length === 0) {
                 alert('Recherchez d\'abord des DPE');
                 return;
@@ -55,3 +653,124 @@ function createRoute() {
 
             switchScreen('route');
         }
+
+        function sortAddressesSmart(addresses) {
+            // Tri intelligent sans géocodage - rapide et efficace !
+            const addressesWithParsed = addresses.map(addr => {
+                const parsed = parseAddress(addr);
+                return {
+                    original: addr,
+                    street: parsed.street,
+                    number: parsed.number
+                };
+            });
+
+            // Grouper par rue
+            const streetGroups = {};
+            addressesWithParsed.forEach(addr => {
+                const streetKey = addr.street || addr.original;
+                if (!streetGroups[streetKey]) {
+                    streetGroups[streetKey] = [];
+                }
+                streetGroups[streetKey].push(addr);
+            });
+
+            // Trier les numéros dans chaque rue
+            Object.keys(streetGroups).forEach(street => {
+                streetGroups[street].sort((a, b) => {
+                    if (a.number && b.number) {
+                        return a.number - b.number;
+                    }
+                    return 0;
+                });
+            });
+
+            // Trier les rues alphabétiquement
+            const sortedStreets = Object.keys(streetGroups).sort();
+
+            // Aplatir le résultat
+            const sortedResult = [];
+            sortedStreets.forEach(street => {
+                streetGroups[street].forEach(addr => {
+                    sortedResult.push(addr.original);
+                });
+            });
+
+            return sortedResult;
+        }
+
+        function parseAddress(address) {
+            // Extraire le numéro et le nom de rue
+            const parts = address.split(',')[0].trim();
+            
+            // Regex pour capturer le numéro en début d'adresse
+            const numberMatch = parts.match(/^(\d+[\s\-]*[a-zA-Z]?)\s+(.+)/);
+            
+            if (numberMatch) {
+                const number = parseInt(numberMatch[1].replace(/\D/g, ''));
+                const street = numberMatch[2].trim().toLowerCase();
+                return {
+                    number: number,
+                    street: street
+                };
+            }
+            
+            // Si pas de numéro trouvé, utiliser l'adresse complète comme nom de rue
+            return {
+                number: null,
+                street: parts.toLowerCase()
+            };
+        }
+
+        function openAllRoutes() {
+            const addressesToUse = sortedAddresses.length > 0 ? sortedAddresses : currentAddresses;
+            
+            if (addressesToUse.length === 0) {
+                alert('Aucune adresse disponible');
+                return;
+            }
+            
+            const numRoutes = Math.ceil(addressesToUse.length / 9);
+            const maxToOpen = Math.min(numRoutes, 3);
+            
+            for (let i = 0; i < maxToOpen; i++) {
+                setTimeout(() => {
+                    const start = i * 9;
+                    const end = Math.min(start + 9, addressesToUse.length);
+                    const routeAddresses = addressesToUse.slice(start, end);
+
+                    const origin = encodeURIComponent(routeAddresses[0]);
+                    const destination = encodeURIComponent(routeAddresses[routeAddresses.length - 1]);
+                    const waypoints = routeAddresses.slice(1, -1).map(a => encodeURIComponent(a)).join('|');
+
+                    let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+                    if (waypoints) {
+                        url += `&waypoints=${waypoints}`;
+                        url += '&waypoint_optimization=true';
+                    }
+                    url += '&travelmode=driving';
+
+                    window.open(url, '_blank');
+                }, i * 500);
+            }
+            
+            if (numRoutes > 3) {
+                alert(`✅ Ouverture des 3 premiers itinéraires !\n\nVous avez ${numRoutes} itinéraires au total. Utilisez les boutons individuels pour ouvrir les autres.`);
+            }
+        }
+
+        function openWaze() {
+            if (currentAddresses.length === 0) return;
+            
+            const addr = encodeURIComponent(currentAddresses[0]);
+            window.open(`https://waze.com/ul?q=${addr}&navigate=yes`, '_blank');
+            
+            alert(`✅ Waze ouvert !\n\nVous pouvez parcourir toutes les adresses une par une dans Waze.`);
+        }
+
+        document.getElementById('codePostal').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchDPE();
+        });
+    </script>
+</body>
+</html>
