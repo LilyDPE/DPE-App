@@ -2,13 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="icon-512.png">
-    <meta name="theme-color" content="#667eea">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DPE Pro">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <meta name="theme-color" content="#667eea">
     <title>DPE Prospection Pro</title>
     <style>
         * {
@@ -351,7 +350,6 @@
         <p>Prospection immobilière intelligente</p>
     </div>
 
-    <!-- Screen 1: Recherche -->
     <div class="screen active" id="searchScreen">
         <div class="container">
             <div class="search-card">
@@ -402,7 +400,6 @@
         </div>
     </div>
 
-    <!-- Screen 2: Résultats -->
     <div class="screen" id="resultsScreen">
         <div class="container">
             <div class="results-header" id="resultsHeader"></div>
@@ -410,7 +407,6 @@
         </div>
     </div>
 
-    <!-- Screen 3: Itinéraire -->
     <div class="screen" id="routeScreen">
         <div class="container">
             <div class="empty-state" id="emptyRoute">
@@ -445,12 +441,10 @@
         </div>
     </div>
 
-    <!-- Floating Action Button -->
     <button class="fab" id="fab" onclick="createRoute()">
         🗺️
     </button>
 
-    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <button class="nav-item active" onclick="switchScreen('search')">
             <span class="nav-icon">🔍</span>
@@ -525,7 +519,7 @@
                 switchScreen('results');
                 
             } catch (error) {
-                alert('Erreur lors de la recherche');
+                alert('Erreur lors de la recherche: ' + error.message);
                 console.error(error);
             } finally {
                 document.getElementById('loading').style.display = 'none';
@@ -635,14 +629,14 @@
                 if (waypoints) url += `&waypoints=${waypoints}`;
                 url += '&travelmode=driving';
 
-                linksDiv.innerHTML += 
+                linksDiv.innerHTML += `
                     <div class="route-card">
-                    <h4>🚗 Itinéraire ${i + 1}/${numRoutes} <span class="address-count">${start + 1}-${end}</span></h4>
-                    <a class="btn btn-success" href="${url}" target="_blank" rel="noopener noreferrer">
-                        Ouvrir l'itinéraire ${i + 1}
-                    </a>
-                </div>
-            ;
+                        <h4>🚗 Itinéraire ${i + 1}/${numRoutes} <span class="address-count">${start + 1}-${end}</span></h4>
+                        <button class="btn btn-success" onclick="window.open('${url}', '_blank')">
+                            Ouvrir l'itinéraire ${i + 1}
+                        </button>
+                    </div>
+                `;
             }
 
             switchScreen('route');
@@ -675,7 +669,7 @@
             const addr = encodeURIComponent(currentAddresses[0]);
             window.open(`https://waze.com/ul?q=${addr}&navigate=yes`, '_blank');
             
-            alert(`✅ Waze ouvert !\n\nVous pouvez aussi copier toutes les adresses et les ajouter manuellement dans Waze.`);
+            alert(`✅ Waze ouvert !\n\nVous pouvez parcourir toutes les adresses une par une dans Waze.`);
         }
 
         document.getElementById('codePostal').addEventListener('keypress', (e) => {
