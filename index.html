@@ -613,7 +613,7 @@
                         Ouvrir dans Google Maps
                     </button>
                     <button class="btn btn-warning" onclick="sendAllToModelo()">
-                        📤 Envoyer tout à Modelo
+                        📋 Copier tout pour Modelo
                     </button>
                 </div>
 
@@ -829,7 +829,7 @@
                         📥 Export CSV
                     </button>
                     <button class="btn btn-small btn-warning" onclick="sendAllToModelo()">
-                        📤 Tout vers Modelo
+                        📋 Copier pour Modelo
                     </button>
                 </div>
             `;
@@ -944,7 +944,7 @@
                                           >${note.comment || ''}</textarea>
                             </div>
                             <button class="modelo-btn" onclick="sendToModelo(${index})">
-                                📤 Envoyer à Modelo
+                                📋 Copier pour Modelo
                             </button>
                         </div>
                     </div>
@@ -1030,25 +1030,98 @@
             
             const fullAddress = `${address}, ${postalCode} ${city}`;
             
-            // Créer l'URL Modelo avec l'adresse
-            const modeloUrl = `modelo://add-property?address=${encodeURIComponent(fullAddress)}`;
+            // Créer le message formaté pour Modelo
+            const message = `🏠 Nouvelle prospection DPE\n\n📍 Adresse: ${fullAddress}\n⚡ Classe: ${dpe.classe_consommation_energie || 'N/A'}\n📐 Surface: ${dpe.surface_habitable_logement || 'N/A'} m²\n📅 Date DPE: ${dpe.date_etablissement_dpe || 'N/A'}\n🏗️ Type: ${dpe.type_batiment || 'N/A'}`;
             
-            // Essayer d'ouvrir l'app Modelo
-            window.location.href = modeloUrl;
+            // Option 1: Copier dans le presse-papier
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(message).then(() => {
+                    showToast('📋 Adresse copiée ! Collez dans Modelo');
+                }).catch(() => {
+                    // Si échec, utiliser la méthode alternative
+                    copyFallback(message);
+                });
+            } else {
+                // Méthode alternative pour les anciens navigateurs
+                copyFallback(message);
+            }
             
-            showToast('Envoyé vers Modelo');
+            // Option 2: Afficher un popup avec les options
+            setTimeout(() => {
+                if (confirm(`📋 L'adresse a été copiée !\n\n${fullAddress}\n\nVoulez-vous ouvrir Modelo maintenant ?`)) {
+                    // Essayer plusieurs méthodes pour ouvrir Modelo
+                    
+                    // Méthode 1: URL scheme iOS (peut fonctionner sur certaines apps)
+                    const modeloUrl = `modelo://add?address=${encodeURIComponent(fullAddress)}`;
+                    const testLink = document.createElement('a');
+                    testLink.href = modeloUrl;
+                    testLink.style.display = 'none';
+                    document.body.appendChild(testLink);
+                    testLink.click();
+                    document.body.removeChild(testLink);
+                    
+                    // Méthode 2: Ouvrir l'App Store après un délai si l'app n'est pas installée
+                    setTimeout(() => {
+                        // Si on arrive ici, l'app n'est probablement pas installée
+                        if (confirm("Modelo ne semble pas installé. Voulez-vous l'installer depuis l'App Store ?")) {
+                            window.open('https://apps.apple.com/fr/app/modelo/id1234567890', '_blank'); // Remplacer par le vrai ID
+                        }
+                    }, 1000);
+                }
+            }, 100);
+        }
+        
+        function copyFallback(text) {
+            // Méthode alternative pour copier du texte
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.top = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('📋 Adresse copiée ! Collez dans Modelo');
+            } catch (err) {
+                showToast('⚠️ Copie manuelle requise');
+                alert(`Copiez cette adresse pour Modelo:\n\n${text}`);
+            }
+            document.body.removeChild(textArea);
         }
 
         function sendAllToModelo() {
-            let count = 0;
+            if (currentData.length === 0) {
+                alert('Aucune adresse à envoyer');
+                return;
+            }
+            
+            // Créer une liste formatée de toutes les adresses
+            let allAddresses = '📋 LISTE DPE POUR MODELO\n';
+            allAddresses += '=' .repeat(30) + '\n\n';
+            
             currentData.forEach((dpe, index) => {
-                setTimeout(() => {
-                    sendToModelo(index);
-                }, count * 500); // Délai de 500ms entre chaque envoi
-                count++;
+                const address = dpe.adresse_brut || '';
+                const postalCode = dpe.code_postal_brut || '';
+                const city = dpe.commune || '';
+                const fullAddress = `${address}, ${postalCode} ${city}`;
+                
+                allAddresses += `${index + 1}. ${fullAddress}\n`;
+                allAddresses += `   Classe: ${dpe.classe_consommation_energie || 'N/A'} | `;
+                allAddresses += `Surface: ${dpe.surface_habitable_logement || 'N/A'}m² | `;
+                allAddresses += `Type: ${dpe.type_batiment || 'N/A'}\n\n`;
             });
             
-            showToast(`Envoi de ${count} adresses vers Modelo`);
+            // Copier toutes les adresses dans le presse-papier
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(allAddresses).then(() => {
+                    showToast(`📋 ${currentData.length} adresses copiées !`);
+                    alert(`✅ ${currentData.length} adresses copiées !\n\nCollez-les dans Modelo pour les importer en masse.`);
+                }).catch(() => {
+                    copyFallback(allAddresses);
+                });
+            } else {
+                copyFallback(allAddresses);
+            }
         }
 
         function exportCSV() {
