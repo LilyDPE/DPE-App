@@ -149,10 +149,6 @@
             transition: all 0.3s;
         }
 
-        .result-card:active {
-            transform: scale(0.98);
-        }
-
         .dpe-badge {
             display: inline-block;
             padding: 6px 12px;
@@ -170,7 +166,6 @@
         .dpe-e { background: #fdb930; }
         .dpe-f { background: #f3671f; }
         .dpe-g { background: #ed1c24; }
-        .dpe-na { background: #999; }
 
         .address {
             font-size: 16px;
@@ -204,10 +199,6 @@
             transition: all 0.3s;
         }
 
-        .action-button:active {
-            transform: scale(0.95);
-        }
-
         .map-button {
             background: linear-gradient(135deg, #00c896 0%, #00a06d 100%);
         }
@@ -221,10 +212,6 @@
         .modelo-button:disabled {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             cursor: not-allowed;
-        }
-
-        .modelo-button.error {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         }
 
         .stats-card {
@@ -287,31 +274,6 @@
             margin: 15px 0;
             text-align: center;
         }
-
-        .success-badge {
-            display: inline-block;
-            background: #10b981;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-
-        .class-distribution {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .class-stat {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-        }
     </style>
 </head>
 <body>
@@ -320,13 +282,13 @@
             🏠 DPE Prospection Pro
             <button class="agent-button" onclick="setAgentName()">⚙️ Agent</button>
         </h1>
-        <p id="location-info">📍 Données en temps réel ADEME</p>
+        <p id="location-info">📍 Données ADEME en temps réel</p>
     </div>
 
     <div class="container">
         <div class="search-card">
             <div class="form-group">
-                <label for="postal-code">📍 Code Postal (5 chiffres)</label>
+                <label for="postal-code">📍 Code Postal</label>
                 <input 
                     type="text" 
                     id="postal-code" 
@@ -334,11 +296,7 @@
                     maxlength="5"
                     pattern="[0-9]{5}"
                     value="76260"
-                    onkeypress="return event.charCode >= 48 && event.charCode <= 57"
                 >
-                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
-                    Entrez n'importe quel code postal français
-                </small>
             </div>
 
             <div class="form-group">
@@ -371,20 +329,6 @@
                 </select>
             </div>
 
-            <div class="form-group">
-                <label for="dpe-class">🏷️ Classe DPE (optionnel)</label>
-                <select id="dpe-class">
-                    <option value="">Toutes les classes</option>
-                    <option value="A">A - Excellent</option>
-                    <option value="B">B - Très bon</option>
-                    <option value="C">C - Bon</option>
-                    <option value="D">D - Moyen</option>
-                    <option value="E">E - Médiocre</option>
-                    <option value="F">F - Mauvais</option>
-                    <option value="G">G - Très mauvais</option>
-                </select>
-            </div>
-
             <button onclick="searchDPE()">🔍 Rechercher les DPE</button>
         </div>
 
@@ -394,10 +338,16 @@
     <script>
         // Configuration
         const NETLIFY_MODELO_API = 'https://cheerful-rolypoly-6eb798.netlify.app/api/modelo';
-        const NETLIFY_ADEME_API = 'https://cheerful-rolypoly-6eb798.netlify.app/api/ademe';
+        
+        // Proxies CORS disponibles
+        const CORS_PROXIES = [
+            'https://corsproxy.io/?',
+            'https://api.allorigins.win/raw?url=',
+            'https://cors-anywhere.herokuapp.com/'
+        ];
         
         let currentData = [];
-        let lastSearch = {};
+        let currentProxyIndex = 0;
 
         // Fonction pour définir le nom de l'agent
         function setAgentName() {
@@ -410,7 +360,7 @@
             }
         }
 
-        // Fonction pour vérifier si un contact a déjà été envoyé
+        // Fonction pour vérifier si déjà envoyé à Modelo
         function isAlreadySentToModelo(address) {
             const sentContacts = JSON.parse(localStorage.getItem('modelo_sent_contacts') || '[]');
             return sentContacts.some(contact => contact.address === address);
@@ -426,16 +376,16 @@
             try {
                 const contactData = {
                     firstName: 'Prospect',
-                    lastName: `DPE ${dpeData.numero_rue || ''} ${dpeData.nom_rue || ''}`.trim(),
+                    lastName: `DPE ${dpeData.N0_rue || ''} ${dpeData.Nom_rue || ''}`.trim(),
                     phone: '',
                     email: '',
-                    address: `${dpeData.numero_rue || ''} ${dpeData.type_voie || ''} ${dpeData.nom_rue || ''}`.trim(),
-                    city: dpeData.commune || '',
-                    postalCode: dpeData.code_postal || '',
-                    dpeClass: dpeData.classe_dpe || '',
-                    dpeDate: dpeData.date_dpe || '',
-                    surface: dpeData.surface || '',
-                    propertyType: dpeData.type_batiment || '',
+                    address: `${dpeData.N0_rue || ''} ${dpeData.Type_voie_rue || ''} ${dpeData.Nom_rue || ''}`.trim(),
+                    city: dpeData.Nom__commune || '',
+                    postalCode: dpeData.Code_postal || '',
+                    dpeClass: dpeData.Etiquette_DPE || '',
+                    dpeDate: dpeData.Date_etablissement_DPE || '',
+                    surface: dpeData.Surface_habitable_logement || '',
+                    propertyType: dpeData.Type_batiment || '',
                     agent: localStorage.getItem('agent_name') || 'App DPE Pro'
                 };
                 
@@ -462,10 +412,6 @@
                     });
                     localStorage.setItem('modelo_sent_contacts', JSON.stringify(sentContacts));
                     
-                    setTimeout(() => {
-                        alert(`✅ Contact créé dans Modelo !\n\nAdresse : ${contactData.address}\nClasse DPE : ${contactData.dpeClass}`);
-                    }, 100);
-                    
                 } else {
                     throw new Error(result.error || 'Erreur lors de l\'envoi');
                 }
@@ -473,24 +419,19 @@
             } catch (error) {
                 console.error('Erreur Modelo:', error);
                 button.textContent = '❌ Erreur d\'envoi';
-                button.classList.add('error');
                 button.disabled = false;
-                
-                alert(`❌ Erreur lors de l'envoi à Modelo :\n\n${error.message}\n\nVérifiez votre connexion et réessayez.`);
                 
                 setTimeout(() => {
                     button.textContent = originalText;
-                    button.classList.remove('error');
                 }, 3000);
             }
         }
 
-        // Fonction pour rechercher les DPE depuis l'API ADEME
+        // Fonction pour rechercher les DPE
         async function searchDPE() {
             const postalCode = document.getElementById('postal-code').value.trim();
             const year = document.getElementById('year').value;
             const month = document.getElementById('month').value;
-            const dpeClass = document.getElementById('dpe-class').value;
             const resultsDiv = document.getElementById('results');
             
             // Valider le code postal
@@ -504,162 +445,177 @@
                 return;
             }
             
-            // Sauvegarder les paramètres de recherche
-            lastSearch = { postalCode, year, month, dpeClass };
-            
-            // Afficher le chargement
             resultsDiv.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
-                    <p>🔍 Recherche des DPE dans la base ADEME...</p>
+                    <p>🔍 Recherche des DPE sur le site ADEME...</p>
                     <p style="font-size: 12px; margin-top: 10px;">Code postal : ${postalCode} - Année : ${year}</p>
                 </div>
             `;
             
-            try {
-                // Construire l'URL avec les paramètres
-                const params = new URLSearchParams({
-                    code_postal: postalCode,
-                    year: year,
-                    month: month || '',
-                    dpe_class: dpeClass || ''
-                });
+            // Construire les dates
+            let dateStart, dateEnd;
+            if (month) {
+                dateStart = `${year}-${month.padStart(2, '0')}-01`;
+                const lastDay = new Date(year, parseInt(month), 0).getDate();
+                dateEnd = `${year}-${month.padStart(2, '0')}-${lastDay}`;
+            } else {
+                dateStart = `${year}-01-01`;
+                dateEnd = `${year}-12-31`;
+            }
+            
+            // URL de l'API ADEME
+            const ademeUrl = `https://data.ademe.fr/data-fair/api/v1/datasets/dpe-v2-logements-existants/lines?size=1000&q_fields=Code_postal&q=${postalCode}&qs=Date_etablissement_DPE:[${dateStart} TO ${dateEnd}]&select=N0_rue,Type_voie_rue,Nom_rue,Code_postal,Nom__commune,Etiquette_DPE,Date_etablissement_DPE,Surface_habitable_logement,Type_batiment,Etiquette_GES`;
+            
+            let dataFetched = false;
+            let attempts = 0;
+            
+            // Essayer avec différents proxies CORS
+            for (let proxyIndex = 0; proxyIndex < CORS_PROXIES.length && !dataFetched; proxyIndex++) {
+                const proxy = CORS_PROXIES[proxyIndex];
+                const proxyUrl = proxy + encodeURIComponent(ademeUrl);
                 
-                const url = `${NETLIFY_ADEME_API}?${params.toString()}`;
-                console.log('Appel API ADEME via Netlify:', url);
+                console.log(`Tentative ${proxyIndex + 1} avec proxy: ${proxy}`);
                 
-                // Appeler l'API via la fonction Netlify
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Erreur serveur: ${response.status}`);
+                try {
+                    const response = await fetch(proxyUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.results && Array.isArray(data.results)) {
+                        currentData = data.results;
+                        displayResults(data.results);
+                        dataFetched = true;
+                        
+                        // Mettre à jour la localisation
+                        if (data.results.length > 0 && data.results[0].Nom__commune) {
+                            document.getElementById('location-info').textContent = `📍 ${data.results[0].Nom__commune} (${postalCode})`;
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error(`Erreur avec proxy ${proxy}:`, error);
+                    attempts++;
                 }
-                
-                const data = await response.json();
-                console.log('Réponse API:', data);
-                
-                if (data.success && data.results) {
-                    currentData = data.results;
-                    displayResults(data);
-                } else {
-                    throw new Error(data.error || 'Aucune donnée reçue');
+            }
+            
+            // Si aucun proxy n'a fonctionné, essayer en direct
+            if (!dataFetched) {
+                console.log('Tentative directe sans proxy...');
+                try {
+                    const response = await fetch(ademeUrl);
+                    const data = await response.json();
+                    
+                    if (data.results) {
+                        currentData = data.results;
+                        displayResults(data.results);
+                        dataFetched = true;
+                    }
+                } catch (error) {
+                    console.error('Erreur accès direct:', error);
+                    
+                    // Afficher un message d'erreur final
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <h3>⚠️ Impossible d'accéder aux données ADEME</h3>
+                            <p>Les serveurs ADEME ne sont pas accessibles pour le moment.</p>
+                            <br>
+                            <p><strong>Solutions alternatives :</strong></p>
+                            <ol style="text-align: left; padding-left: 20px;">
+                                <li>Réessayez dans quelques minutes</li>
+                                <li>Allez directement sur <a href="https://data.ademe.fr/datasets/dpe-v2-logements-existants" target="_blank">le site ADEME</a></li>
+                                <li>Téléchargez le CSV et importez-le</li>
+                            </ol>
+                            <br>
+                            <button onclick="searchDPE()" style="padding: 10px 20px;">🔄 Réessayer</button>
+                        </div>
+                    `;
                 }
-                
-            } catch (error) {
-                console.error('Erreur:', error);
-                resultsDiv.innerHTML = `
-                    <div class="error">
-                        ⚠️ Erreur lors de la récupération des données<br>
-                        <small>${error.message}</small><br><br>
-                        <button onclick="searchDPE()" style="padding: 10px 20px;">🔄 Réessayer</button>
-                    </div>
-                `;
             }
         }
 
-        // Function pour afficher les résultats
-        function displayResults(data) {
+        // Fonction pour afficher les résultats
+        function displayResults(results) {
             const resultsDiv = document.getElementById('results');
-            const results = data.results || [];
             
-            if (results.length === 0) {
+            if (!results || results.length === 0) {
                 resultsDiv.innerHTML = `
                     <div class="info-message">
-                        Aucun DPE trouvé pour le code postal ${lastSearch.postalCode} en ${lastSearch.year}<br>
+                        Aucun DPE trouvé pour cette recherche<br>
                         <small>Essayez une autre période ou un autre code postal</small>
                     </div>
                 `;
                 return;
             }
             
-            // Mettre à jour l'affichage de la localisation
-            const commune = results[0]?.commune || '';
-            if (commune) {
-                document.getElementById('location-info').innerHTML = `📍 ${commune} (${lastSearch.postalCode}) <span class="success-badge">EN DIRECT ADEME</span>`;
-            }
-            
-            // Calculer les statistiques par classe
+            // Calculer les statistiques
             const classStats = {};
             results.forEach(dpe => {
-                const classe = dpe.classe_dpe || 'N/A';
+                const classe = dpe.Etiquette_DPE || 'N/A';
                 classStats[classe] = (classStats[classe] || 0) + 1;
             });
-            
-            // Trier par rue et numéro
-            const sorted = sortByAddress(results);
             
             // Stats
             const stats = `
                 <div class="stats-card">
-                    <h3>📊 Résultats de recherche (données ADEME en direct)</h3>
+                    <h3>📊 Résultats de recherche</h3>
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <div class="stat-value">${sorted.length}</div>
+                            <div class="stat-value">${results.length}</div>
                             <div class="stat-label">DPE trouvés</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value">${lastSearch.month ? getMonthName(lastSearch.month) : 'Année'}</div>
-                            <div class="stat-label">${lastSearch.year}</div>
+                            <div class="stat-value">${document.getElementById('year').value}</div>
+                            <div class="stat-label">Année</div>
                         </div>
-                    </div>
-                    <div class="class-distribution">
-                        ${Object.entries(classStats).map(([classe, count]) => 
-                            `<span class="class-stat dpe-${classe.toLowerCase()}">${classe}: ${count}</span>`
-                        ).join('')}
                     </div>
                 </div>
             `;
             
-            // Bouton itinéraire
-            let routeButton = '';
-            if (sorted.length > 0) {
-                routeButton = `
+            // Boutons d'action
+            let actionButtons = '';
+            if (results.length > 0) {
+                actionButtons = `
                     <button class="route-button" onclick='createGoogleMapsRoute()' style="display: block;">
-                        🗺️ Créer l'itinéraire optimisé dans Google Maps
+                        🗺️ Créer l'itinéraire optimisé
                     </button>
-                `;
-            }
-            
-            // Bouton export CSV
-            let exportButton = '';
-            if (sorted.length > 0) {
-                exportButton = `
                     <button class="export-button" onclick='exportToCSV()' style="display: block;">
                         💾 Exporter en CSV
                     </button>
                 `;
             }
             
-            // Cartes de résultats (limiter à 100 pour les performances)
+            // Cartes de résultats
             let cards = '';
-            const displayCount = Math.min(sorted.length, 100);
+            const maxDisplay = Math.min(results.length, 50);
             
-            for (let i = 0; i < displayCount; i++) {
-                const dpe = sorted[i];
-                const address = `${dpe.numero_rue || ''} ${dpe.type_voie || ''} ${dpe.nom_rue || ''}`.trim();
+            for (let i = 0; i < maxDisplay; i++) {
+                const dpe = results[i];
+                const address = `${dpe.N0_rue || ''} ${dpe.Type_voie_rue || ''} ${dpe.Nom_rue || ''}`.trim();
                 const isAlreadySent = isAlreadySentToModelo(address);
                 
                 cards += `
                     <div class="result-card">
-                        <span class="dpe-badge dpe-${(dpe.classe_dpe || 'na').toLowerCase()}">
-                            DPE ${dpe.classe_dpe || 'N/A'}
-                        </span>
-                        <span class="dpe-badge dpe-${(dpe.classe_ges || 'na').toLowerCase()}">
-                            GES ${dpe.classe_ges || 'N/A'}
+                        <span class="dpe-badge dpe-${(dpe.Etiquette_DPE || 'g').toLowerCase()}">
+                            DPE ${dpe.Etiquette_DPE || 'N/A'}
                         </span>
                         <div class="address">📍 ${address || 'Adresse non spécifiée'}</div>
                         <div class="details">
-                            📅 DPE du : ${formatDate(dpe.date_dpe)}<br>
-                            📐 Surface : ${dpe.surface || 'N/A'} m²<br>
-                            🏠 Type : ${dpe.type_batiment || 'N/A'}
+                            📅 Date : ${formatDate(dpe.Date_etablissement_DPE)}<br>
+                            📐 Surface : ${dpe.Surface_habitable_logement || 'N/A'} m²<br>
+                            🏠 Type : ${dpe.Type_batiment || 'N/A'}
                         </div>
                         <div class="action-buttons">
-                            <button class="action-button map-button" onclick='openGoogleMaps("${address}, ${lastSearch.postalCode}")'>
-                                📍 Google Maps
+                            <button class="action-button map-button" onclick='openGoogleMaps("${address}, ${dpe.Code_postal}")'>
+                                📍 Maps
                             </button>
                         </div>
                         <button 
-                            class="action-button modelo-button ${isAlreadySent ? '' : ''}"
+                            class="action-button modelo-button"
                             onclick='sendToModelo(${JSON.stringify(dpe).replace(/'/g, "\\'").replace(/"/g, '&quot;')})'
                             ${isAlreadySent ? 'disabled' : ''}
                         >
@@ -669,62 +625,31 @@
                 `;
             }
             
-            if (sorted.length > displayCount) {
+            if (results.length > maxDisplay) {
                 cards += `
                     <div class="info-message">
-                        Affichage des ${displayCount} premiers résultats sur ${sorted.length} total<br>
-                        <small>Exportez en CSV pour obtenir la liste complète</small>
+                        Affichage des ${maxDisplay} premiers sur ${results.length}<br>
+                        <small>Exportez en CSV pour tout obtenir</small>
                     </div>
                 `;
             }
             
-            resultsDiv.innerHTML = stats + routeButton + exportButton + cards;
+            resultsDiv.innerHTML = stats + actionButtons + cards;
         }
 
-        // Fonction pour trier par adresse
-        function sortByAddress(addresses) {
-            // Grouper par rue
-            const streetGroups = {};
-            for (const addr of addresses) {
-                const streetKey = `${addr.type_voie || ''} ${addr.nom_rue || ''}`;
-                if (!streetGroups[streetKey]) {
-                    streetGroups[streetKey] = [];
-                }
-                streetGroups[streetKey].push(addr);
-            }
-
-            // Trier chaque groupe par numéro
-            for (const street in streetGroups) {
-                streetGroups[street].sort((a, b) => {
-                    const numA = parseInt(a.numero_rue) || 0;
-                    const numB = parseInt(b.numero_rue) || 0;
-                    return numA - numB;
-                });
-            }
-
-            // Reconstituer la liste triée
-            const sorted = [];
-            const sortedStreets = Object.keys(streetGroups).sort();
-            for (const street of sortedStreets) {
-                sorted.push(...streetGroups[street]);
-            }
-
-            return sorted;
-        }
-
-        // Fonction pour créer l'itinéraire Google Maps
+        // Fonction pour créer l'itinéraire
         function createGoogleMapsRoute() {
             if (currentData.length === 0) return;
             
-            const destination = encodeURIComponent(`${lastSearch.postalCode}, France`);
+            const postalCode = document.getElementById('postal-code').value;
+            const destination = encodeURIComponent(`${postalCode}, France`);
             
             const waypoints = currentData.slice(0, 23).map(addr => {
-                const fullAddr = `${addr.numero_rue || ''} ${addr.type_voie || ''} ${addr.nom_rue || ''}, ${lastSearch.postalCode} France`;
+                const fullAddr = `${addr.N0_rue || ''} ${addr.Type_voie_rue || ''} ${addr.Nom_rue || ''}, ${postalCode} France`;
                 return encodeURIComponent(fullAddr);
             }).join('/');
             
             const url = `https://www.google.com/maps/dir/${destination}/${waypoints}/${destination}?optimize=true`;
-            
             window.open(url, '_blank');
         }
 
@@ -738,20 +663,18 @@
         function exportToCSV() {
             if (currentData.length === 0) return;
             
-            const headers = ['Numéro', 'Type voie', 'Nom rue', 'Code postal', 'Commune', 'Classe DPE', 'Classe GES', 'Date DPE', 'Surface', 'Type bâtiment'];
+            const headers = ['Numéro', 'Type voie', 'Nom rue', 'Code postal', 'Commune', 'Classe DPE', 'Date DPE', 'Surface'];
             const csvContent = [
                 headers.join(';'),
                 ...currentData.map(dpe => [
-                    dpe.numero_rue || '',
-                    dpe.type_voie || '',
-                    dpe.nom_rue || '',
-                    dpe.code_postal || '',
-                    dpe.commune || '',
-                    dpe.classe_dpe || '',
-                    dpe.classe_ges || '',
-                    dpe.date_dpe || '',
-                    dpe.surface || '',
-                    dpe.type_batiment || ''
+                    dpe.N0_rue || '',
+                    dpe.Type_voie_rue || '',
+                    dpe.Nom_rue || '',
+                    dpe.Code_postal || '',
+                    dpe.Nom__commune || '',
+                    dpe.Etiquette_DPE || '',
+                    dpe.Date_etablissement_DPE || '',
+                    dpe.Surface_habitable_logement || ''
                 ].join(';'))
             ].join('\n');
             
@@ -760,7 +683,7 @@
             const url = URL.createObjectURL(blob);
             
             link.setAttribute('href', url);
-            link.setAttribute('download', `dpe_${lastSearch.postalCode}_${lastSearch.year}.csv`);
+            link.setAttribute('download', `dpe_${document.getElementById('postal-code').value}_${document.getElementById('year').value}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -778,18 +701,7 @@
             }
         }
 
-        // Fonction pour obtenir le nom du mois
-        function getMonthName(month) {
-            const months = {
-                '01': 'Janvier', '02': 'Février', '03': 'Mars',
-                '04': 'Avril', '05': 'Mai', '06': 'Juin',
-                '07': 'Juillet', '08': 'Août', '09': 'Septembre',
-                '10': 'Octobre', '11': 'Novembre', '12': 'Décembre'
-            };
-            return months[month] || '';
-        }
-
-        // Vérifier si un agent est défini au démarrage
+        // Au démarrage
         window.onload = function() {
             const agent = localStorage.getItem('agent_name');
             if (!agent) {
@@ -799,9 +711,6 @@
                     }
                 }, 1000);
             }
-            
-            // Note sur l'année 2024 par défaut
-            console.log('Note: L\'année 2024 est sélectionnée par défaut car les données 2025 peuvent ne pas être complètes.');
         };
     </script>
 </body>
