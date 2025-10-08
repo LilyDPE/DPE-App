@@ -359,6 +359,20 @@
             font-weight: 500;
         }
 
+        .nav-badge {
+            position: absolute;
+            top: 2px;
+            right: 50%;
+            transform: translateX(12px);
+            background: #e31e24;
+            color: white;
+            font-size: 0.6em;
+            padding: 2px 4px;
+            border-radius: 8px;
+            min-width: 14px;
+            text-align: center;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -622,6 +636,58 @@
         </div>
     </div>
 
+    <!-- Screen 4: Mes Notes -->
+    <div class="screen" id="notesScreen">
+        <div class="container">
+            <div class="results-header">
+                <h3>📝 Mes Notes Sauvegardées</h3>
+                <p id="notesCount">0 adresse(s) avec des notes</p>
+                <div class="action-buttons">
+                    <button class="btn btn-small btn-success" onclick="exportAllNotes()">
+                        📥 Export CSV
+                    </button>
+                    <button class="btn btn-small btn-warning" onclick="clearAllNotes()">
+                        🗑️ Effacer tout
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <h4>Filtrer par statut</h4>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterNotes('')">
+                        Toutes
+                    </button>
+                    <button class="filter-btn" onclick="filterNotes('to-visit')">
+                        📍 À visiter
+                    </button>
+                    <button class="filter-btn" onclick="filterNotes('visited')">
+                        ✅ Visité
+                    </button>
+                    <button class="filter-btn" onclick="filterNotes('interested')">
+                        ⭐ Intéressé
+                    </button>
+                    <button class="filter-btn" onclick="filterNotes('not-interested')">
+                        ❌ Pas intéressé
+                    </button>
+                </div>
+            </div>
+            
+            <div class="search-card">
+                <input type="text" id="notesSearch" placeholder="🔍 Rechercher dans les notes..." 
+                       oninput="searchNotes(this.value)">
+            </div>
+            
+            <div id="notesList">
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>Aucune note</h3>
+                    <p>Vos notes apparaîtront ici</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Action Button -->
     <button class="fab" id="fab" onclick="createRoute()">
         🗺️
@@ -644,6 +710,11 @@
             <span class="nav-icon">🗺️</span>
             <span class="nav-label">Itinéraire</span>
         </button>
+        <button class="nav-item" onclick="switchScreen('notes')" style="position: relative;">
+            <span class="nav-icon">📝</span>
+            <span class="nav-label">Notes</span>
+            <span class="nav-badge" id="notesBadge" style="display: none;">0</span>
+        </button>
     </div>
 
     <script>
@@ -663,6 +734,24 @@
         // Sauvegarder les notes
         function saveNotes() {
             localStorage.setItem('dpeNotes', JSON.stringify(dpeNotes));
+            updateNotesBadge();
+        }
+
+        // Mettre à jour le badge de notifications
+        function updateNotesBadge() {
+            const notesCount = Object.entries(dpeNotes).filter(([key, note]) => 
+                note.status || note.comment
+            ).length;
+            
+            const badge = document.getElementById('notesBadge');
+            if (badge) {
+                if (notesCount > 0) {
+                    badge.textContent = notesCount > 99 ? '99+' : notesCount;
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
         }
 
         // Afficher une notification toast
@@ -688,6 +777,10 @@
             } else if (screen === 'route') {
                 document.getElementById('routeScreen').classList.add('active');
                 document.querySelectorAll('.nav-item')[2].classList.add('active');
+            } else if (screen === 'notes') {
+                document.getElementById('notesScreen').classList.add('active');
+                document.querySelectorAll('.nav-item')[3].classList.add('active');
+                displayAllNotes();
             }
         }
 
@@ -1246,13 +1339,230 @@
 
         // Charger les notes au démarrage
         loadNotes();
+        updateNotesBadge();
 
         document.getElementById('codePostal').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchDPE();
         });
 
+        // Fonctions pour l'écran Mes Notes
+        let notesFilter = '';
+        let notesSearchTerm = '';
+
+        function displayAllNotes() {
+            const allNotes = Object.entries(dpeNotes);
+            const notesWithContent = allNotes.filter(([key, note]) => 
+                note.status || note.comment
+            );
+            
+            document.getElementById('notesCount').textContent = 
+                `${notesWithContent.length} adresse(s) avec des notes`;
+            
+            if (notesWithContent.length === 0) {
+                document.getElementById('notesList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <h3>Aucune note</h3>
+                        <p>Vos notes apparaîtront ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Grouper les notes par code postal et date
+            const groupedNotes = {};
+            notesWithContent.forEach(([key, note]) => {
+                // Extraire les infos depuis la clé
+                const parts = key.split('_');
+                const dateStr = parts[parts.length - 1];
+                const address = parts.slice(0, -1).join('_');
+                
+                // Créer un groupe par mois/année
+                const dateGroup = dateStr ? dateStr.substring(0, 7) : 'Sans date';
+                
+                if (!groupedNotes[dateGroup]) {
+                    groupedNotes[dateGroup] = [];
+                }
+                
+                groupedNotes[dateGroup].push({
+                    address: address,
+                    date: dateStr,
+                    note: note,
+                    key: key
+                });
+            });
+            
+            // Trier les groupes par date (plus récent en premier)
+            const sortedGroups = Object.keys(groupedNotes).sort().reverse();
+            
+            let html = '';
+            sortedGroups.forEach(group => {
+                const items = groupedNotes[group];
+                
+                // Filtrer selon le statut
+                let filteredItems = items;
+                if (notesFilter) {
+                    filteredItems = items.filter(item => item.note.status === notesFilter);
+                }
+                
+                // Filtrer selon la recherche
+                if (notesSearchTerm) {
+                    filteredItems = filteredItems.filter(item => 
+                        item.address.toLowerCase().includes(notesSearchTerm.toLowerCase()) ||
+                        (item.note.comment && item.note.comment.toLowerCase().includes(notesSearchTerm.toLowerCase()))
+                    );
+                }
+                
+                if (filteredItems.length === 0) return;
+                
+                html += `
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: #667eea; margin-bottom: 10px;">📅 ${group}</h4>
+                `;
+                
+                filteredItems.forEach(item => {
+                    const statusBadge = item.note.status ? getStatusBadge(item.note.status) : '';
+                    
+                    html += `
+                        <div class="dpe-card has-note" style="margin-bottom: 10px;">
+                            <div class="dpe-header">
+                                <div class="dpe-address">📍 ${item.address || 'Adresse inconnue'}</div>
+                                ${statusBadge}
+                            </div>
+                            ${item.note.comment ? `
+                                <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 8px;">
+                                    <strong>Note :</strong> ${item.note.comment}
+                                </div>
+                            ` : ''}
+                            <div style="margin-top: 10px; display: flex; gap: 10px;">
+                                <button class="btn btn-small btn-primary" onclick="editNote('${item.key}')">
+                                    ✏️ Modifier
+                                </button>
+                                <button class="btn btn-small" style="background: #e31e24; color: white;" 
+                                        onclick="deleteNote('${item.key}')">
+                                    🗑️ Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            });
+            
+            document.getElementById('notesList').innerHTML = html;
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'to-visit': '<span class="classe-badge" style="background: #667eea;">📍 À visiter</span>',
+                'visited': '<span class="classe-badge" style="background: #38ef7d;">✅ Visité</span>',
+                'interested': '<span class="classe-badge" style="background: #fdb913; color: black;">⭐ Intéressé</span>',
+                'not-interested': '<span class="classe-badge" style="background: #e31e24;">❌ Pas intéressé</span>'
+            };
+            return badges[status] || '';
+        }
+
+        function filterNotes(status) {
+            notesFilter = status;
+            
+            // Mettre à jour les boutons
+            document.querySelectorAll('#notesScreen .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayAllNotes();
+        }
+
+        function searchNotes(term) {
+            notesSearchTerm = term;
+            displayAllNotes();
+        }
+
+        function editNote(key) {
+            const note = dpeNotes[key];
+            const newComment = prompt('Modifier la note :', note.comment || '');
+            
+            if (newComment !== null) {
+                if (!dpeNotes[key]) {
+                    dpeNotes[key] = {};
+                }
+                dpeNotes[key].comment = newComment;
+                saveNotes();
+                displayAllNotes();
+                showToast('Note modifiée');
+            }
+        }
+
+        function deleteNote(key) {
+            if (confirm('Supprimer cette note ?')) {
+                delete dpeNotes[key];
+                saveNotes();
+                displayAllNotes();
+                showToast('Note supprimée');
+            }
+        }
+
+        function clearAllNotes() {
+            if (confirm('⚠️ Effacer TOUTES les notes ?\n\nCette action est irréversible !')) {
+                dpeNotes = {};
+                saveNotes();
+                displayAllNotes();
+                showToast('Toutes les notes supprimées');
+            }
+        }
+
+        function exportAllNotes() {
+            const allNotes = Object.entries(dpeNotes);
+            const notesWithContent = allNotes.filter(([key, note]) => 
+                note.status || note.comment
+            );
+            
+            if (notesWithContent.length === 0) {
+                alert('Aucune note à exporter');
+                return;
+            }
+            
+            // Créer le CSV
+            let csv = 'Adresse,Date DPE,Statut,Note,Date Export\n';
+            
+            notesWithContent.forEach(([key, note]) => {
+                const parts = key.split('_');
+                const dateStr = parts[parts.length - 1];
+                const address = parts.slice(0, -1).join('_');
+                
+                const statusText = {
+                    'to-visit': 'À visiter',
+                    'visited': 'Visité',
+                    'interested': 'Intéressé',
+                    'not-interested': 'Pas intéressé'
+                }[note.status] || '';
+                
+                const row = [
+                    address || 'Adresse inconnue',
+                    dateStr || '',
+                    statusText,
+                    note.comment || '',
+                    new Date().toLocaleString('fr-FR')
+                ];
+                
+                csv += row.map(field => `"${field}"`).join(',') + '\n';
+            });
+            
+            // Créer et télécharger le fichier
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Mes_Notes_DPE_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showToast(`Export de ${notesWithContent.length} notes réussi`);
+        }
+
         // Version de l'app
-        console.log('DPE Pro v2.0 - Toutes fonctionnalités intégrées');
+        console.log('DPE Pro v2.2 - Écran Mes Notes ajouté');
     </script>
 </body>
 </html>
