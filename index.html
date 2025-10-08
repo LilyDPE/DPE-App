@@ -2,12 +2,13 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <meta name="theme-color" content="#667eea">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DPE Pro">
-    <link rel="apple-touch-icon" href="icon-512.png">
-    <meta name="theme-color" content="#667eea">
     <title>DPE Prospection Pro</title>
     <style>
         * {
@@ -37,19 +38,6 @@
         .header h1 {
             font-size: 1.5em;
             font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .agent-button {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-size: 0.8em;
-            cursor: pointer;
         }
 
         .header p {
@@ -60,6 +48,14 @@
 
         .container {
             padding: 15px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
         }
 
         .search-card {
@@ -79,60 +75,84 @@
             font-weight: 600;
             margin-bottom: 8px;
             color: #333;
+            font-size: 0.95em;
         }
 
-        select, input {
+        input, select, textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e5e5e7;
-            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #e5e5ea;
+            border-radius: 12px;
             font-size: 16px;
+            background: #f9f9f9;
             transition: all 0.3s;
+            font-family: inherit;
         }
 
-        select:focus, input:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
         }
 
-        button {
+        .btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            padding: 18px;
             border: none;
             border-radius: 12px;
             font-size: 17px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
-        button:active {
+        .btn-primary:active {
             transform: scale(0.98);
         }
 
-        button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+            width: auto;
+            display: inline-flex;
         }
 
         .loading {
             text-align: center;
-            padding: 40px;
-            color: #666;
+            padding: 40px 20px;
+            display: none;
         }
 
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -140,578 +160,1026 @@
             100% { transform: rotate(360deg); }
         }
 
-        .result-card {
+        .results-header {
             background: white;
             border-radius: 15px;
-            padding: 15px;
+            padding: 20px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            transition: all 0.3s;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
         }
 
-        .dpe-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            margin-right: 10px;
-            color: white;
-        }
-
-        .dpe-a { background: #00a06d; }
-        .dpe-b { background: #51b84b; }
-        .dpe-c { background: #c8d419; }
-        .dpe-d { background: #fcee21; color: #333; }
-        .dpe-e { background: #fdb930; }
-        .dpe-f { background: #f3671f; }
-        .dpe-g { background: #ed1c24; }
-
-        .address {
-            font-size: 16px;
-            font-weight: 600;
-            margin: 10px 0;
-            color: #1d1d1f;
-        }
-
-        .details {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.6;
+        .results-header h3 {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 10px;
         }
 
         .action-buttons {
-            margin-top: 15px;
             display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .stat-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .dpe-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-left: 4px solid #667eea;
+            position: relative;
+        }
+
+        .dpe-card.has-note {
+            border-left-color: #38ef7d;
+        }
+
+        .dpe-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
             gap: 10px;
         }
 
-        .action-button {
-            flex: 1;
-            padding: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
+        .dpe-address {
             font-weight: 600;
+            font-size: 1.05em;
+            color: #1d1d1f;
+            flex: 1;
+        }
+
+        .classe-badge {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 1em;
+            flex-shrink: 0;
+        }
+
+        .classe-A { background: #00a651; color: white; }
+        .classe-B { background: #50b748; color: white; }
+        .classe-C { background: #c8d200; color: white; }
+        .classe-D { background: #fef200; color: black; }
+        .classe-E { background: #fdb913; color: black; }
+        .classe-F { background: #f36e21; color: white; }
+        .classe-G { background: #e31e24; color: white; }
+        .classe-NA { background: #999; color: white; }
+
+        .dpe-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+
+        .info-item {
+            color: #666;
+        }
+
+        .info-item strong {
+            color: #333;
+        }
+
+        .dpe-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e5ea;
+        }
+
+        .status-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .status-btn {
+            padding: 6px 12px;
+            border: 2px solid #e5e5ea;
+            border-radius: 20px;
+            background: white;
+            color: #666;
+            font-size: 0.85em;
             cursor: pointer;
             transition: all 0.3s;
         }
 
-        .map-button {
-            background: linear-gradient(135deg, #00c896 0%, #00a06d 100%);
+        .status-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
         }
 
-        .modelo-button {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            width: 100%;
+        .status-btn.visited { border-color: #38ef7d; color: #38ef7d; }
+        .status-btn.visited.active { background: #38ef7d; color: white; }
+        .status-btn.interested { border-color: #fdb913; color: #fdb913; }
+        .status-btn.interested.active { background: #fdb913; color: white; }
+        .status-btn.not-interested { border-color: #e31e24; color: #e31e24; }
+        .status-btn.not-interested.active { background: #e31e24; color: white; }
+
+        .note-section {
             margin-top: 10px;
         }
 
-        .modelo-button:disabled {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            cursor: not-allowed;
+        .note-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e5ea;
+            border-radius: 10px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 60px;
         }
 
-        .stats-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .modelo-btn {
+            background: linear-gradient(135deg, #764ba2 0%, #f5576c 100%);
             color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9em;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+            color: #8e8e93;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 1.5em;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .nav-label {
+            font-size: 0.7em;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            font-size: 1.5em;
+            box-shadow: 0 4px 20px rgba(17, 153, 142, 0.4);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+        }
+
+        .fab.show {
+            display: flex;
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        .route-card {
+            background: white;
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 15px;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-
-        .route-button {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        .route-card h4 {
+            color: #667eea;
             margin-bottom: 15px;
-            display: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .export-button {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        .alert {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 15px;
             margin-bottom: 15px;
-            display: none;
+            font-size: 0.9em;
         }
 
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
+        .address-count {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
             border-radius: 10px;
-            margin-top: 15px;
-            text-align: center;
+            font-size: 0.85em;
+            margin-left: 5px;
         }
 
-        .info-message {
-            background: #e8f4fd;
-            color: #0066cc;
+        .filter-section {
+            background: white;
+            border-radius: 15px;
             padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 15px;
+            border: 2px solid #e5e5ea;
+            border-radius: 20px;
+            background: white;
+            color: #666;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .progress-bar {
+            background: #e5e5ea;
             border-radius: 10px;
-            margin: 15px 0;
-            text-align: center;
+            height: 8px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 375px) {
+            .dpe-info {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>
-            🏠 DPE Prospection Pro
-            <button class="agent-button" onclick="setAgentName()">⚙️ Agent</button>
-        </h1>
-        <p id="location-info">📍 Données ADEME en temps réel</p>
+        <h1>🏠 DPE Pro</h1>
+        <p>Prospection immobilière intelligente</p>
     </div>
 
-    <div class="container">
-        <div class="search-card">
-            <div class="form-group">
-                <label for="postal-code">📍 Code Postal</label>
-                <input 
-                    type="text" 
-                    id="postal-code" 
-                    placeholder="Ex: 76260, 75001, 13000..." 
-                    maxlength="5"
-                    pattern="[0-9]{5}"
-                    value="76260"
-                >
+    <!-- Screen 1: Recherche -->
+    <div class="screen active" id="searchScreen">
+        <div class="container">
+            <div class="search-card">
+                <div class="form-group">
+                    <label for="codePostal">📍 Code Postal</label>
+                    <input type="text" id="codePostal" value="76260" placeholder="Ex: 76260" inputmode="numeric">
+                </div>
+
+                <div class="form-group">
+                    <label for="annee">📅 Année</label>
+                    <select id="annee">
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mois">🗓️ Mois (optionnel)</label>
+                    <select id="mois">
+                        <option value="">Tous les mois</option>
+                        <option value="01">Janvier</option>
+                        <option value="02">Février</option>
+                        <option value="03">Mars</option>
+                        <option value="04">Avril</option>
+                        <option value="05">Mai</option>
+                        <option value="06">Juin</option>
+                        <option value="07">Juillet</option>
+                        <option value="08">Août</option>
+                        <option value="09">Septembre</option>
+                        <option value="10">Octobre</option>
+                        <option value="11">Novembre</option>
+                        <option value="12">Décembre</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="classeFilter">⚡ Classe énergétique (optionnel)</label>
+                    <select id="classeFilter">
+                        <option value="">Toutes les classes</option>
+                        <option value="F,G">F et G uniquement</option>
+                        <option value="E,F,G">E, F et G</option>
+                        <option value="A,B,C">A, B et C</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" onclick="searchDPE()">
+                    🔍 Rechercher les DPE
+                </button>
             </div>
 
-            <div class="form-group">
-                <label for="year">📅 Année</label>
-                <select id="year">
-                    <option value="2025">2025</option>
-                    <option value="2024" selected>2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
-                </select>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Recherche en cours...</p>
             </div>
-
-            <div class="form-group">
-                <label for="month">📆 Mois</label>
-                <select id="month">
-                    <option value="">Tous les mois</option>
-                    <option value="01">Janvier</option>
-                    <option value="02">Février</option>
-                    <option value="03">Mars</option>
-                    <option value="04">Avril</option>
-                    <option value="05">Mai</option>
-                    <option value="06">Juin</option>
-                    <option value="07">Juillet</option>
-                    <option value="08">Août</option>
-                    <option value="09">Septembre</option>
-                    <option value="10">Octobre</option>
-                    <option value="11">Novembre</option>
-                    <option value="12">Décembre</option>
-                </select>
-            </div>
-
-            <button onclick="searchDPE()">🔍 Rechercher les DPE</button>
         </div>
+    </div>
 
-        <div id="results"></div>
+    <!-- Screen 2: Résultats -->
+    <div class="screen" id="resultsScreen">
+        <div class="container">
+            <div class="results-header" id="resultsHeader"></div>
+            <div class="filter-section" id="filterSection" style="display: none;">
+                <h4>🏘️ Filtrer par rue</h4>
+                <div class="filter-buttons" id="streetFilters"></div>
+            </div>
+            <div id="resultsList"></div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Itinéraire -->
+    <div class="screen" id="routeScreen">
+        <div class="container">
+            <div class="empty-state" id="emptyRoute">
+                <div class="empty-icon">🗺️</div>
+                <h3>Aucun itinéraire</h3>
+                <p>Recherchez d'abord des DPE</p>
+            </div>
+            <div id="routeContent" style="display: none;">
+                <div class="route-card">
+                    <h4>📊 Récapitulatif</h4>
+                    <p><strong id="routeTotal">0</strong> adresses à visiter</p>
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;" id="routeInfo"></p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="routeProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="alert" id="routeAlert" style="display: none;">
+                    ⚠️ Google Maps limite à 10 destinations.<br>
+                    Je vais créer plusieurs itinéraires optimisés !
+                </div>
+
+                <div class="route-card">
+                    <h4>🚗 Actions rapides</h4>
+                    <button class="btn btn-success" style="margin-bottom: 10px;" onclick="openAllRoutes()">
+                        Ouvrir dans Google Maps
+                    </button>
+                    <button class="btn btn-warning" onclick="sendAllToModelo()">
+                        📤 Envoyer tout à Modelo
+                    </button>
+                </div>
+
+                <div id="routeLinks"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" id="fab" onclick="createRoute()">
+        🗺️
+    </button>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchScreen('search')">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">Recherche</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('results')">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Résultats</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('route')">
+            <span class="nav-icon">🗺️</span>
+            <span class="nav-label">Itinéraire</span>
+        </button>
     </div>
 
     <script>
-        // Configuration
-        const NETLIFY_MODELO_API = 'https://cheerful-rolypoly-6eb798.netlify.app/api/modelo';
-        
-        // Proxies CORS disponibles
-        const CORS_PROXIES = [
-            'https://corsproxy.io/?',
-            'https://api.allorigins.win/raw?url=',
-            'https://cors-anywhere.herokuapp.com/'
-        ];
-        
         let currentData = [];
-        let currentProxyIndex = 0;
+        let currentAddresses = [];
+        let dpeNotes = {};
+        let activeFilter = '';
 
-        // Fonction pour définir le nom de l'agent
-        function setAgentName() {
-            const currentAgent = localStorage.getItem('agent_name');
-            const newAgent = prompt('Nom de l\'agent commercial :', currentAgent || '');
-            
-            if (newAgent) {
-                localStorage.setItem('agent_name', newAgent);
-                alert(`✅ Agent défini : ${newAgent}`);
+        // Charger les notes sauvegardées
+        function loadNotes() {
+            const saved = localStorage.getItem('dpeNotes');
+            if (saved) {
+                dpeNotes = JSON.parse(saved);
             }
         }
 
-        // Fonction pour vérifier si déjà envoyé à Modelo
-        function isAlreadySentToModelo(address) {
-            const sentContacts = JSON.parse(localStorage.getItem('modelo_sent_contacts') || '[]');
-            return sentContacts.some(contact => contact.address === address);
+        // Sauvegarder les notes
+        function saveNotes() {
+            localStorage.setItem('dpeNotes', JSON.stringify(dpeNotes));
         }
 
-        // Fonction pour envoyer à Modelo
-        async function sendToModelo(dpeData) {
-            const button = event.target;
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.textContent = '⏳ Envoi en cours...';
-            
-            try {
-                const contactData = {
-                    firstName: 'Prospect',
-                    lastName: `DPE ${dpeData.N0_rue || ''} ${dpeData.Nom_rue || ''}`.trim(),
-                    phone: '',
-                    email: '',
-                    address: `${dpeData.N0_rue || ''} ${dpeData.Type_voie_rue || ''} ${dpeData.Nom_rue || ''}`.trim(),
-                    city: dpeData.Nom__commune || '',
-                    postalCode: dpeData.Code_postal || '',
-                    dpeClass: dpeData.Etiquette_DPE || '',
-                    dpeDate: dpeData.Date_etablissement_DPE || '',
-                    surface: dpeData.Surface_habitable_logement || '',
-                    propertyType: dpeData.Type_batiment || '',
-                    agent: localStorage.getItem('agent_name') || 'App DPE Pro'
-                };
-                
-                const response = await fetch(NETLIFY_MODELO_API, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(contactData)
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    button.textContent = '✅ Envoyé à Modelo !';
-                    button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                    button.disabled = true;
-                    
-                    const sentContacts = JSON.parse(localStorage.getItem('modelo_sent_contacts') || '[]');
-                    sentContacts.push({
-                        address: contactData.address,
-                        date: new Date().toISOString(),
-                        modeloId: result.modeloId
-                    });
-                    localStorage.setItem('modelo_sent_contacts', JSON.stringify(sentContacts));
-                    
-                } else {
-                    throw new Error(result.error || 'Erreur lors de l\'envoi');
-                }
-                
-            } catch (error) {
-                console.error('Erreur Modelo:', error);
-                button.textContent = '❌ Erreur d\'envoi';
-                button.disabled = false;
-                
-                setTimeout(() => {
-                    button.textContent = originalText;
-                }, 3000);
+        // Afficher une notification toast
+        function showToast(message, duration = 2000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        function switchScreen(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            if (screen === 'search') {
+                document.getElementById('searchScreen').classList.add('active');
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+            } else if (screen === 'results') {
+                document.getElementById('resultsScreen').classList.add('active');
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+            } else if (screen === 'route') {
+                document.getElementById('routeScreen').classList.add('active');
+                document.querySelectorAll('.nav-item')[2].classList.add('active');
             }
         }
 
-        // Fonction pour rechercher les DPE
         async function searchDPE() {
-            const postalCode = document.getElementById('postal-code').value.trim();
-            const year = document.getElementById('year').value;
-            const month = document.getElementById('month').value;
-            const resultsDiv = document.getElementById('results');
-            
-            // Valider le code postal
-            if (!/^[0-9]{5}$/.test(postalCode)) {
-                resultsDiv.innerHTML = `
-                    <div class="error">
-                        ❌ Code postal invalide<br>
-                        <small>Veuillez entrer un code postal français à 5 chiffres</small>
-                    </div>
-                `;
+            const codePostal = document.getElementById('codePostal').value.trim();
+            const annee = document.getElementById('annee').value;
+            const mois = document.getElementById('mois').value;
+            const classeFilter = document.getElementById('classeFilter').value;
+
+            if (!codePostal) {
+                alert('Veuillez entrer un code postal');
                 return;
             }
-            
-            resultsDiv.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>🔍 Recherche des DPE sur le site ADEME...</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Code postal : ${postalCode} - Année : ${year}</p>
-                </div>
-            `;
-            
-            // Construire les dates
-            let dateStart, dateEnd;
-            if (month) {
-                dateStart = `${year}-${month.padStart(2, '0')}-01`;
-                const lastDay = new Date(year, parseInt(month), 0).getDate();
-                dateEnd = `${year}-${month.padStart(2, '0')}-${lastDay}`;
+
+            document.getElementById('loading').style.display = 'block';
+
+            const url = 'https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines';
+
+            let dateDebut, dateFin;
+
+            if (mois) {
+                const lastDay = new Date(annee, parseInt(mois), 0).getDate();
+                dateDebut = `${annee}-${mois}-01`;
+                dateFin = `${annee}-${mois}-${lastDay}`;
             } else {
-                dateStart = `${year}-01-01`;
-                dateEnd = `${year}-12-31`;
+                dateDebut = annee === '2021' ? '2021-07-01' : `${annee}-01-01`;
+                dateFin = `${annee}-12-31`;
             }
+
+            let qs = `code_postal_brut:${codePostal} AND date_etablissement_dpe:[${dateDebut} TO ${dateFin}]`;
             
-            // URL de l'API ADEME
-            const ademeUrl = `https://data.ademe.fr/data-fair/api/v1/datasets/dpe-v2-logements-existants/lines?size=1000&q_fields=Code_postal&q=${postalCode}&qs=Date_etablissement_DPE:[${dateStart} TO ${dateEnd}]&select=N0_rue,Type_voie_rue,Nom_rue,Code_postal,Nom__commune,Etiquette_DPE,Date_etablissement_DPE,Surface_habitable_logement,Type_batiment,Etiquette_GES`;
-            
-            let dataFetched = false;
-            let attempts = 0;
-            
-            // Essayer avec différents proxies CORS
-            for (let proxyIndex = 0; proxyIndex < CORS_PROXIES.length && !dataFetched; proxyIndex++) {
-                const proxy = CORS_PROXIES[proxyIndex];
-                const proxyUrl = proxy + encodeURIComponent(ademeUrl);
-                
-                console.log(`Tentative ${proxyIndex + 1} avec proxy: ${proxy}`);
-                
-                try {
-                    const response = await fetch(proxyUrl);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    if (data.results && Array.isArray(data.results)) {
-                        currentData = data.results;
-                        displayResults(data.results);
-                        dataFetched = true;
-                        
-                        // Mettre à jour la localisation
-                        if (data.results.length > 0 && data.results[0].Nom__commune) {
-                            document.getElementById('location-info').textContent = `📍 ${data.results[0].Nom__commune} (${postalCode})`;
-                        }
-                    }
-                    
-                } catch (error) {
-                    console.error(`Erreur avec proxy ${proxy}:`, error);
-                    attempts++;
-                }
+            // Ajouter le filtre de classe si spécifié
+            if (classeFilter) {
+                const classes = classeFilter.split(',');
+                const classFilter = classes.map(c => `classe_consommation_energie:${c}`).join(' OR ');
+                qs += ` AND (${classFilter})`;
             }
-            
-            // Si aucun proxy n'a fonctionné, essayer en direct
-            if (!dataFetched) {
-                console.log('Tentative directe sans proxy...');
-                try {
-                    const response = await fetch(ademeUrl);
-                    const data = await response.json();
-                    
-                    if (data.results) {
-                        currentData = data.results;
-                        displayResults(data.results);
-                        dataFetched = true;
-                    }
-                } catch (error) {
-                    console.error('Erreur accès direct:', error);
-                    
-                    // Afficher un message d'erreur final
-                    resultsDiv.innerHTML = `
-                        <div class="error">
-                            <h3>⚠️ Impossible d'accéder aux données ADEME</h3>
-                            <p>Les serveurs ADEME ne sont pas accessibles pour le moment.</p>
-                            <br>
-                            <p><strong>Solutions alternatives :</strong></p>
-                            <ol style="text-align: left; padding-left: 20px;">
-                                <li>Réessayez dans quelques minutes</li>
-                                <li>Allez directement sur <a href="https://data.ademe.fr/datasets/dpe-v2-logements-existants" target="_blank">le site ADEME</a></li>
-                                <li>Téléchargez le CSV et importez-le</li>
-                            </ol>
-                            <br>
-                            <button onclick="searchDPE()" style="padding: 10px 20px;">🔄 Réessayer</button>
-                        </div>
-                    `;
-                }
+
+            const params = new URLSearchParams({
+                size: 1000,
+                qs: qs
+            });
+
+            try {
+                const response = await fetch(`${url}?${params}`);
+                const data = await response.json();
+                currentData = data.results || [];
+
+                // Trier les adresses intelligemment
+                currentData = sortAddressesByStreet(currentData);
+
+                displayResults(data, codePostal, annee, mois);
+                switchScreen('results');
+
+            } catch (error) {
+                alert('Erreur lors de la recherche');
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
             }
         }
 
-        // Fonction pour afficher les résultats
-        function displayResults(results) {
-            const resultsDiv = document.getElementById('results');
+        // Fonction de tri intelligent par rue
+        function sortAddressesByStreet(data) {
+            // Grouper par rue
+            const byStreet = {};
             
-            if (!results || results.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="info-message">
-                        Aucun DPE trouvé pour cette recherche<br>
-                        <small>Essayez une autre période ou un autre code postal</small>
-                    </div>
+            data.forEach(dpe => {
+                const addr = dpe.adresse_brut || '';
+                // Extraire le nom de rue (approximatif)
+                const streetMatch = addr.match(/(?:rue|avenue|boulevard|place|chemin|allée|impasse)\s+([^,]+)/i);
+                const street = streetMatch ? streetMatch[0].toLowerCase() : addr.toLowerCase();
+                
+                if (!byStreet[street]) {
+                    byStreet[street] = [];
+                }
+                byStreet[street].push(dpe);
+            });
+
+            // Trier chaque rue par numéro
+            Object.keys(byStreet).forEach(street => {
+                byStreet[street].sort((a, b) => {
+                    const numA = parseInt(a.adresse_brut.match(/^\d+/) || 0);
+                    const numB = parseInt(b.adresse_brut.match(/^\d+/) || 0);
+                    return numA - numB;
+                });
+            });
+
+            // Fusionner toutes les rues triées
+            const sorted = [];
+            Object.keys(byStreet).sort().forEach(street => {
+                sorted.push(...byStreet[street]);
+            });
+
+            return sorted;
+        }
+
+        function displayResults(data, codePostal, annee, mois) {
+            const total = data.total || 0;
+            const results = data.results || [];
+
+            const moisNoms = {
+                '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril',
+                '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août',
+                '09': 'Septembre', '10': 'Octobre', '11': 'Novembre', '12': 'Décembre'
+            };
+
+            const header = document.getElementById('resultsHeader');
+
+            if (total === 0) {
+                const periode = mois ? `${moisNoms[mois]} ${annee}` : annee;
+                header.innerHTML = `
+                    <h3>Aucun résultat</h3>
+                    <p>Aucun DPE trouvé pour ${codePostal} en ${periode}</p>
                 `;
+                document.getElementById('resultsList').innerHTML = '';
+                document.getElementById('fab').classList.remove('show');
+                document.getElementById('filterSection').style.display = 'none';
                 return;
             }
-            
-            // Calculer les statistiques
-            const classStats = {};
+
+            const classeCount = {};
             results.forEach(dpe => {
-                const classe = dpe.Etiquette_DPE || 'N/A';
-                classStats[classe] = (classStats[classe] || 0) + 1;
+                const classe = dpe.classe_consommation_energie || 'N/A';
+                classeCount[classe] = (classeCount[classe] || 0) + 1;
             });
-            
-            // Stats
-            const stats = `
-                <div class="stats-card">
-                    <h3>📊 Résultats de recherche</h3>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-value">${results.length}</div>
-                            <div class="stat-label">DPE trouvés</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">${document.getElementById('year').value}</div>
-                            <div class="stat-label">Année</div>
-                        </div>
-                    </div>
+
+            const periode = mois ? `${moisNoms[mois]} ${annee}` : annee;
+            header.innerHTML = `
+                <h3>${total} DPE trouvé${total > 1 ? 's' : ''}</h3>
+                <p>${codePostal} - ${periode}</p>
+                <div class="stats">
+                    ${Object.entries(classeCount).map(([classe, count]) => `
+                        <span class="stat-badge classe-${classe === 'N/A' ? 'NA' : classe}">${classe}: ${count}</span>
+                    `).join('')}
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-small btn-success" onclick="exportCSV()">
+                        📥 Export CSV
+                    </button>
+                    <button class="btn btn-small btn-warning" onclick="sendAllToModelo()">
+                        📤 Tout vers Modelo
+                    </button>
                 </div>
             `;
-            
-            // Boutons d'action
-            let actionButtons = '';
-            if (results.length > 0) {
-                actionButtons = `
-                    <button class="route-button" onclick='createGoogleMapsRoute()' style="display: block;">
-                        🗺️ Créer l'itinéraire optimisé
+
+            // Créer les filtres de rue
+            const streets = {};
+            results.forEach(dpe => {
+                const addr = dpe.adresse_brut || '';
+                const streetMatch = addr.match(/(?:rue|avenue|boulevard|place|chemin|allée|impasse)\s+([^,]+)/i);
+                const street = streetMatch ? streetMatch[0] : 'Autre';
+                streets[street] = (streets[street] || 0) + 1;
+            });
+
+            if (Object.keys(streets).length > 1) {
+                const filterSection = document.getElementById('filterSection');
+                filterSection.style.display = 'block';
+                const filterButtons = document.getElementById('streetFilters');
+                filterButtons.innerHTML = `
+                    <button class="filter-btn ${activeFilter === '' ? 'active' : ''}" onclick="filterByStreet('')">
+                        Toutes (${results.length})
                     </button>
-                    <button class="export-button" onclick='exportToCSV()' style="display: block;">
-                        💾 Exporter en CSV
-                    </button>
+                    ${Object.entries(streets).map(([street, count]) => `
+                        <button class="filter-btn ${activeFilter === street ? 'active' : ''}" onclick="filterByStreet('${street.replace(/'/g, "\\'")}')">
+                            ${street} (${count})
+                        </button>
+                    `).join('')}
                 `;
+            } else {
+                document.getElementById('filterSection').style.display = 'none';
+            }
+
+            // Afficher les résultats
+            displayFilteredResults(results);
+
+            document.getElementById('fab').classList.add('show');
+
+            currentAddresses = results.map(dpe => {
+                let addr = dpe.adresse_brut || '';
+                if (dpe.code_postal_brut) addr += ', ' + dpe.code_postal_brut;
+                if (dpe.commune) addr += ' ' + dpe.commune;
+                return addr;
+            }).filter(a => a);
+        }
+
+        function filterByStreet(street) {
+            activeFilter = street;
+            const results = currentData;
+            
+            let filtered = results;
+            if (street) {
+                filtered = results.filter(dpe => {
+                    const addr = dpe.adresse_brut || '';
+                    return addr.toLowerCase().includes(street.toLowerCase());
+                });
             }
             
-            // Cartes de résultats
-            let cards = '';
-            const maxDisplay = Math.min(results.length, 50);
+            displayFilteredResults(filtered);
             
-            for (let i = 0; i < maxDisplay; i++) {
-                const dpe = results[i];
-                const address = `${dpe.N0_rue || ''} ${dpe.Type_voie_rue || ''} ${dpe.Nom_rue || ''}`.trim();
-                const isAlreadySent = isAlreadySentToModelo(address);
+            // Mettre à jour les boutons de filtre
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(street) || (street === '' && btn.textContent.includes('Toutes'))) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function displayFilteredResults(results) {
+            const list = document.getElementById('resultsList');
+            list.innerHTML = results.map((dpe, index) => {
+                const noteKey = `${dpe.adresse_brut}_${dpe.date_etablissement_dpe}`;
+                const note = dpeNotes[noteKey] || {};
+                const hasNote = note.status || note.comment;
                 
-                cards += `
-                    <div class="result-card">
-                        <span class="dpe-badge dpe-${(dpe.Etiquette_DPE || 'g').toLowerCase()}">
-                            DPE ${dpe.Etiquette_DPE || 'N/A'}
-                        </span>
-                        <div class="address">📍 ${address || 'Adresse non spécifiée'}</div>
-                        <div class="details">
-                            📅 Date : ${formatDate(dpe.Date_etablissement_DPE)}<br>
-                            📐 Surface : ${dpe.Surface_habitable_logement || 'N/A'} m²<br>
-                            🏠 Type : ${dpe.Type_batiment || 'N/A'}
+                return `
+                    <div class="dpe-card ${hasNote ? 'has-note' : ''}" id="dpe-${index}">
+                        <div class="dpe-header">
+                            <div class="dpe-address">📍 ${dpe.adresse_brut || 'Adresse non renseignée'}</div>
+                            <span class="classe-badge classe-${dpe.classe_consommation_energie || 'NA'}">
+                                ${dpe.classe_consommation_energie || 'N/A'}
+                            </span>
                         </div>
-                        <div class="action-buttons">
-                            <button class="action-button map-button" onclick='openGoogleMaps("${address}, ${dpe.Code_postal}")'>
-                                📍 Maps
+                        <div class="dpe-info">
+                            <div class="info-item">📅 <strong>${dpe.date_etablissement_dpe || 'N/A'}</strong></div>
+                            <div class="info-item">📐 <strong>${dpe.surface_habitable_logement || 'N/A'} m²</strong></div>
+                            <div class="info-item">🌡️ GES: <strong>${dpe.classe_estimation_ges || 'N/A'}</strong></div>
+                            <div class="info-item">🏗️ <strong>${dpe.type_batiment || 'N/A'}</strong></div>
+                        </div>
+                        <div class="dpe-actions">
+                            <div class="status-buttons">
+                                <button class="status-btn ${note.status === 'to-visit' ? 'active' : ''}" 
+                                        onclick="setStatus('${noteKey}', 'to-visit', ${index})">
+                                    📍 À visiter
+                                </button>
+                                <button class="status-btn visited ${note.status === 'visited' ? 'active' : ''}" 
+                                        onclick="setStatus('${noteKey}', 'visited', ${index})">
+                                    ✅ Visité
+                                </button>
+                                <button class="status-btn interested ${note.status === 'interested' ? 'active' : ''}" 
+                                        onclick="setStatus('${noteKey}', 'interested', ${index})">
+                                    ⭐ Intéressé
+                                </button>
+                                <button class="status-btn not-interested ${note.status === 'not-interested' ? 'active' : ''}" 
+                                        onclick="setStatus('${noteKey}', 'not-interested', ${index})">
+                                    ❌ Pas intéressé
+                                </button>
+                            </div>
+                            <div class="note-section">
+                                <textarea class="note-input" 
+                                          placeholder="Ajouter une note..." 
+                                          onblur="saveNote('${noteKey}', this.value, ${index})"
+                                          >${note.comment || ''}</textarea>
+                            </div>
+                            <button class="modelo-btn" onclick="sendToModelo(${index})">
+                                📤 Envoyer à Modelo
                             </button>
                         </div>
-                        <button 
-                            class="action-button modelo-button"
-                            onclick='sendToModelo(${JSON.stringify(dpe).replace(/'/g, "\\'").replace(/"/g, '&quot;')})'
-                            ${isAlreadySent ? 'disabled' : ''}
-                        >
-                            ${isAlreadySent ? '✅ Déjà dans Modelo' : '📤 Envoyer à Modelo'}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setStatus(noteKey, status, index) {
+            if (!dpeNotes[noteKey]) {
+                dpeNotes[noteKey] = {};
+            }
+            
+            // Toggle status
+            if (dpeNotes[noteKey].status === status) {
+                delete dpeNotes[noteKey].status;
+            } else {
+                dpeNotes[noteKey].status = status;
+            }
+            
+            saveNotes();
+            
+            // Mettre à jour l'affichage
+            const card = document.getElementById(`dpe-${index}`);
+            if (card) {
+                const buttons = card.querySelectorAll('.status-btn');
+                buttons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.textContent.includes('À visiter') && status === 'to-visit' && dpeNotes[noteKey].status) {
+                        btn.classList.add('active');
+                    } else if (btn.textContent.includes('Visité') && status === 'visited' && dpeNotes[noteKey].status) {
+                        btn.classList.add('active');
+                    } else if (btn.textContent.includes('Intéressé') && status === 'interested' && dpeNotes[noteKey].status) {
+                        btn.classList.add('active');
+                    } else if (btn.textContent.includes('Pas intéressé') && status === 'not-interested' && dpeNotes[noteKey].status) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Mettre à jour la classe de la carte
+                if (dpeNotes[noteKey].status || dpeNotes[noteKey].comment) {
+                    card.classList.add('has-note');
+                } else {
+                    card.classList.remove('has-note');
+                }
+            }
+            
+            showToast('Statut mis à jour');
+        }
+
+        function saveNote(noteKey, comment, index) {
+            if (!dpeNotes[noteKey]) {
+                dpeNotes[noteKey] = {};
+            }
+            
+            if (comment.trim()) {
+                dpeNotes[noteKey].comment = comment;
+            } else {
+                delete dpeNotes[noteKey].comment;
+            }
+            
+            saveNotes();
+            
+            // Mettre à jour l'affichage
+            const card = document.getElementById(`dpe-${index}`);
+            if (card) {
+                if (dpeNotes[noteKey].status || dpeNotes[noteKey].comment) {
+                    card.classList.add('has-note');
+                } else {
+                    card.classList.remove('has-note');
+                }
+            }
+            
+            if (comment.trim()) {
+                showToast('Note sauvegardée');
+            }
+        }
+
+        function sendToModelo(index) {
+            const dpe = currentData[index];
+            const address = dpe.adresse_brut || '';
+            const postalCode = dpe.code_postal_brut || '';
+            const city = dpe.commune || '';
+            
+            const fullAddress = `${address}, ${postalCode} ${city}`;
+            
+            // Créer l'URL Modelo avec l'adresse
+            const modeloUrl = `modelo://add-property?address=${encodeURIComponent(fullAddress)}`;
+            
+            // Essayer d'ouvrir l'app Modelo
+            window.location.href = modeloUrl;
+            
+            showToast('Envoyé vers Modelo');
+        }
+
+        function sendAllToModelo() {
+            let count = 0;
+            currentData.forEach((dpe, index) => {
+                setTimeout(() => {
+                    sendToModelo(index);
+                }, count * 500); // Délai de 500ms entre chaque envoi
+                count++;
+            });
+            
+            showToast(`Envoi de ${count} adresses vers Modelo`);
+        }
+
+        function exportCSV() {
+            if (currentData.length === 0) {
+                alert('Aucune donnée à exporter');
+                return;
+            }
+            
+            // Créer le CSV
+            let csv = 'Adresse,Code Postal,Commune,Classe Énergie,Classe GES,Surface,Date DPE,Type Bâtiment,Statut,Note\n';
+            
+            currentData.forEach(dpe => {
+                const noteKey = `${dpe.adresse_brut}_${dpe.date_etablissement_dpe}`;
+                const note = dpeNotes[noteKey] || {};
+                
+                const row = [
+                    dpe.adresse_brut || '',
+                    dpe.code_postal_brut || '',
+                    dpe.commune || '',
+                    dpe.classe_consommation_energie || '',
+                    dpe.classe_estimation_ges || '',
+                    dpe.surface_habitable_logement || '',
+                    dpe.date_etablissement_dpe || '',
+                    dpe.type_batiment || '',
+                    note.status || '',
+                    note.comment || ''
+                ];
+                
+                csv += row.map(field => `"${field}"`).join(',') + '\n';
+            });
+            
+            // Créer et télécharger le fichier
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `DPE_${document.getElementById('codePostal').value}_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showToast('Export CSV réussi');
+        }
+
+        function createRoute() {
+            if (currentAddresses.length === 0) {
+                alert('Recherchez d\'abord des DPE');
+                return;
+            }
+
+            document.getElementById('emptyRoute').style.display = 'none';
+            document.getElementById('routeContent').style.display = 'block';
+
+            document.getElementById('routeTotal').textContent = currentAddresses.length;
+
+            const numRoutes = Math.ceil(currentAddresses.length / 9);
+            document.getElementById('routeInfo').textContent = 
+                numRoutes > 1 ? `Divisé en ${numRoutes} itinéraires optimisés` : 'Un seul itinéraire optimisé';
+
+            if (currentAddresses.length > 10) {
+                document.getElementById('routeAlert').style.display = 'block';
+            }
+
+            // Calculer la progression (exemple: adresses avec notes)
+            const notedCount = currentData.filter(dpe => {
+                const noteKey = `${dpe.adresse_brut}_${dpe.date_etablissement_dpe}`;
+                return dpeNotes[noteKey] && dpeNotes[noteKey].status;
+            }).length;
+            
+            const progress = (notedCount / currentAddresses.length) * 100;
+            document.getElementById('routeProgress').style.width = `${progress}%`;
+
+            const linksDiv = document.getElementById('routeLinks');
+            linksDiv.innerHTML = '';
+
+            for (let i = 0; i < numRoutes; i++) {
+                const start = i * 9;
+                const end = Math.min(start + 9, currentAddresses.length);
+                const routeAddresses = currentAddresses.slice(start, end);
+
+                const origin = encodeURIComponent(routeAddresses[0]);
+                const destination = encodeURIComponent(routeAddresses[routeAddresses.length - 1]);
+                const waypoints = routeAddresses.slice(1, -1).map(a => encodeURIComponent(a)).join('|');
+
+                let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+                if (waypoints) url += `&waypoints=${waypoints}`;
+                url += '&travelmode=driving&waypoint_optimization=true';
+
+                linksDiv.innerHTML += `
+                    <div class="route-card">
+                        <h4>🚗 Itinéraire ${i + 1}/${numRoutes} <span class="address-count">${start + 1}-${end}</span></h4>
+                        <button class="btn btn-success" onclick="window.open('${url}', '_blank')">
+                            Ouvrir l'itinéraire ${i + 1}
                         </button>
                     </div>
                 `;
             }
-            
-            if (results.length > maxDisplay) {
-                cards += `
-                    <div class="info-message">
-                        Affichage des ${maxDisplay} premiers sur ${results.length}<br>
-                        <small>Exportez en CSV pour tout obtenir</small>
-                    </div>
-                `;
-            }
-            
-            resultsDiv.innerHTML = stats + actionButtons + cards;
+
+            switchScreen('route');
         }
 
-        // Fonction pour créer l'itinéraire
-        function createGoogleMapsRoute() {
-            if (currentData.length === 0) return;
-            
-            const postalCode = document.getElementById('postal-code').value;
-            const destination = encodeURIComponent(`${postalCode}, France`);
-            
-            const waypoints = currentData.slice(0, 23).map(addr => {
-                const fullAddr = `${addr.N0_rue || ''} ${addr.Type_voie_rue || ''} ${addr.Nom_rue || ''}, ${postalCode} France`;
-                return encodeURIComponent(fullAddr);
-            }).join('/');
-            
-            const url = `https://www.google.com/maps/dir/${destination}/${waypoints}/${destination}?optimize=true`;
-            window.open(url, '_blank');
-        }
-
-        // Fonction pour ouvrir Google Maps
-        function openGoogleMaps(address) {
-            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-            window.open(url, '_blank');
-        }
-
-        // Fonction pour exporter en CSV
-        function exportToCSV() {
-            if (currentData.length === 0) return;
-            
-            const headers = ['Numéro', 'Type voie', 'Nom rue', 'Code postal', 'Commune', 'Classe DPE', 'Date DPE', 'Surface'];
-            const csvContent = [
-                headers.join(';'),
-                ...currentData.map(dpe => [
-                    dpe.N0_rue || '',
-                    dpe.Type_voie_rue || '',
-                    dpe.Nom_rue || '',
-                    dpe.Code_postal || '',
-                    dpe.Nom__commune || '',
-                    dpe.Etiquette_DPE || '',
-                    dpe.Date_etablissement_DPE || '',
-                    dpe.Surface_habitable_logement || ''
-                ].join(';'))
-            ].join('\n');
-            
-            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `dpe_${document.getElementById('postal-code').value}_${document.getElementById('year').value}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // Fonction pour formater la date
-        function formatDate(dateStr) {
-            if (!dateStr) return 'Non spécifié';
-            try {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('fr-FR');
-            } catch {
-                return dateStr;
-            }
-        }
-
-        // Au démarrage
-        window.onload = function() {
-            const agent = localStorage.getItem('agent_name');
-            if (!agent) {
+        function openAllRoutes() {
+            const numRoutes = Math.ceil(currentAddresses.length / 9);
+            for (let i = 0; i < Math.min(numRoutes, 3); i++) {
                 setTimeout(() => {
-                    if (confirm('Voulez-vous définir votre nom d\'agent commercial ?')) {
-                        setAgentName();
-                    }
-                }, 1000);
+                    const start = i * 9;
+                    const end = Math.min(start + 9, currentAddresses.length);
+                    const routeAddresses = currentAddresses.slice(start, end);
+
+                    const origin = encodeURIComponent(routeAddresses[0]);
+                    const destination = encodeURIComponent(routeAddresses[routeAddresses.length - 1]);
+                    const waypoints = routeAddresses.slice(1, -1).map(a => encodeURIComponent(a)).join('|');
+
+                    let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+                    if (waypoints) url += `&waypoints=${waypoints}`;
+                    url += '&travelmode=driving&waypoint_optimization=true';
+
+                    window.open(url, '_blank');
+                }, i * 500);
             }
-        };
+            
+            showToast('Ouverture des itinéraires...');
+        }
+
+        // Charger les notes au démarrage
+        loadNotes();
+
+        document.getElementById('codePostal').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchDPE();
+        });
+
+        // Version de l'app
+        console.log('DPE Pro v2.0 - Toutes fonctionnalités intégrées');
     </script>
 </body>
 </html>
