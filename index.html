@@ -907,13 +907,27 @@
 
         // AMÉLIORATION: Fonction pour extraire le code INSEE de l'API ADEME
         function getInseeCode(dpe) {
+            // Vérifier d'abord si on a récupéré le code via BAN
+            if (dpe._code_insee_recovered) {
+                return String(dpe._code_insee_recovered);
+            }
+            
             // L'API ADEME DPE utilise ces champs (par ordre de priorité)
-            return dpe.code_insee_commune_actualise || 
+            const code = dpe.code_insee_commune_actualise || 
                    dpe.code_insee_commune ||
                    dpe.code_commune_insee || 
                    dpe.insee_commune || 
                    dpe.code_insee ||
+                   dpe.numero_commune ||
+                   dpe.commune_code ||
                    null;
+            
+            // Si on a un code, on vérifie qu'il fait bien 5 chiffres
+            if (code && /^\d{5}$/.test(String(code))) {
+                return String(code);
+            }
+            
+            return null;
         }
 
         // AMÉLIORATION: Récupération optimisée du nom de commune via code INSEE
@@ -960,7 +974,7 @@
                 if (communes && communes.length > 0) {
                     const communeName = communes[0].nom;
                     communeCache.set(cacheKey, communeName);
-                    console.log(`✅ CP ${codePostal} → ${communeName}`);
+                    console.log(`✅ CP ${codePostal} → ${communeName} (⚠️ imprécis si multi-communes)`);
                     return communeName;
                 }
             } catch (error) {
@@ -970,28 +984,105 @@
             return null;
         }
 
+        // NOUVEAU: Essayer de récupérer le code INSEE depuis l'adresse complète
+        async function getInseeFromAddress(adresse, codePostal) {
+            if (!adresse || !codePostal) return null;
+            
+            try {
+                // Utiliser l'API BAN (Base Adresse Nationale)
+                const query = encodeURIComponent(`${adresse} ${codePostal}`);
+                const response = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${query}&limit=1`);
+                const data = await response.json();
+                
+                if (data.features && data.features.length > 0) {
+                    const feature = data.features[0];
+                    const cityCode = feature.properties.citycode;
+                    if (cityCode && /^\d{5}$/.test(cityCode)) {
+                        console.log(`🎯 Code INSEE trouvé via BAN pour "${adresse}": ${cityCode}`);
+                        return cityCode;
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur API BAN:', error);
+            }
+            
+            return null;
+        }
+
         // AMÉLIORATION: Enrichissement intelligent avec priorité au code INSEE
         async function enrichWithCommuneNames(dpeList) {
             console.log('🔍 Enrichissement des DPE avec les noms de communes...');
             
+            // DEBUG: Afficher un exemple de DPE pour voir les champs disponibles
+            if (dpeList.length > 0) {
+                console.log('📋 Exemple de DPE brut:', dpeList[0]);
+                console.log('📋 Tous les champs du DPE:', Object.keys(dpeList[0]));
+                const testCodeInsee = getInseeCode(dpeList[0]);
+                console.log(`📋 Code INSEE extrait du premier DPE: ${testCodeInsee || 'AUCUN ❌'}`);
+            }
+            
             // Collecter tous les codes uniques (INSEE prioritaire)
             const uniqueCodes = new Map();
+            let countWithInsee = 0;
+            let countWithoutInsee = 0;
             
             dpeList.forEach(dpe => {
                 const codeInsee = getInseeCode(dpe);
                 const codePostal = dpe.code_postal_brut;
                 
                 // Priorité au code INSEE
-                if (codeInsee && !uniqueCodes.has(codeInsee)) {
-                    uniqueCodes.set(codeInsee, { type: 'insee', code: codeInsee });
+                if (codeInsee) {
+                    countWithInsee++;
+                    if (!uniqueCodes.has(codeInsee)) {
+                        uniqueCodes.set(codeInsee, { type: 'insee', code: codeInsee });
+                    }
                 }
-                // Sinon fallback sur code postal
-                else if (!codeInsee && codePostal && !uniqueCodes.has(`CP_${codePostal}`)) {
-                    uniqueCodes.set(`CP_${codePostal}`, { type: 'postal', code: codePostal });
+                // Sinon fallback sur code postal (mais on garde trace de chaque DPE)
+                else if (codePostal) {
+                    countWithoutInsee++;
+                    // Pour les codes postaux, on ne peut pas distinguer les communes
+                    // donc on marque juste qu'on a besoin de ce code postal
+                    if (!uniqueCodes.has(`CP_${codePostal}`)) {
+                        uniqueCodes.set(`CP_${codePostal}`, { type: 'postal', code: codePostal });
+                    }
                 }
             });
             
+            console.log(`📊 ${countWithInsee} DPE avec code INSEE ✅`);
+            console.log(`📊 ${countWithoutInsee} DPE SANS code INSEE ⚠️`);
             console.log(`📊 ${uniqueCodes.size} codes uniques à traiter`);
+            
+            // Pour les DPE sans code INSEE, essayer de le récupérer via l'API BAN
+            if (countWithoutInsee > 0 && countWithoutInsee <= 50) { // Limiter à 50 requêtes BAN
+                console.log(`🔧 Tentative de récupération des codes INSEE via API BAN...`);
+                let recovered = 0;
+                
+                for (let i = 0; i < dpeList.length && recovered < 50; i++) {
+                    const dpe = dpeList[i];
+                    if (!getInseeCode(dpe) && dpe.adresse_brut && dpe.code_postal_brut) {
+                        const codeInsee = await getInseeFromAddress(dpe.adresse_brut, dpe.code_postal_brut);
+                        if (codeInsee) {
+                            // Ajouter au DPE
+                            dpe._code_insee_recovered = codeInsee;
+                            // Ajouter à la liste des codes à traiter
+                            if (!uniqueCodes.has(codeInsee)) {
+                                uniqueCodes.set(codeInsee, { type: 'insee', code: codeInsee });
+                                await getCommuneFromInsee(codeInsee);
+                            }
+                            recovered++;
+                        }
+                        // Petite pause pour ne pas surcharger l'API
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                }
+                
+                console.log(`✅ ${recovered} codes INSEE récupérés via API BAN`);
+            } else if (countWithoutInsee > 50) {
+                console.warn(`⚠️ ATTENTION: ${countWithoutInsee} DPE n'ont pas de code INSEE !`);
+                console.warn(`⚠️ C'est trop pour utiliser l'API BAN. Fallback sur code postal.`);
+                console.warn(`⚠️ Le code postal 76260 correspond à plusieurs communes (Baromesnil, Ponts-et-Marais, etc.)`);
+                console.warn(`⚠️ Sans code INSEE, on ne peut pas déterminer la vraie commune.`);
+            }
             
             // Récupérer tous les noms en parallèle
             const promises = Array.from(uniqueCodes.values()).map(({type, code}) => {
@@ -1010,19 +1101,22 @@
                 const codePostal = dpe.code_postal_brut;
                 
                 let communeName = null;
+                let needsWarning = false;
                 
                 // Priorité 1: Code INSEE
                 if (codeInsee && communeCache.has(codeInsee)) {
                     communeName = communeCache.get(codeInsee);
                 }
-                // Priorité 2: Code Postal
+                // Priorité 2: Code Postal (mais on prévient que c'est imprécis)
                 else if (codePostal && communeCache.has(`CP_${codePostal}`)) {
                     communeName = communeCache.get(`CP_${codePostal}`);
+                    needsWarning = true; // On marque qu'il manque le code INSEE
                 }
                 
                 return {
                     ...dpe,
                     commune: communeName,
+                    commune_needs_warning: needsWarning,
                     code_insee: codeInsee // On garde le code INSEE pour l'affichage
                 };
             });
@@ -1342,11 +1436,18 @@
             const geoInfo = isGeoSearch 
                 ? `<p style="color: #00c9ff; font-size: 0.9em;">📍 Recherche géolocalisée dans un rayon de ${searchRadius} km</p>`
                 : '';
+            
+            // Vérifier si certains DPE manquent de code INSEE
+            const missingInsee = results.filter(dpe => !dpe.code_insee).length;
+            const inseeWarning = missingInsee > 0 
+                ? `<p style="color: #ff9800; font-size: 0.85em; margin-top: 5px;">⚠️ ${missingInsee} DPE sans code INSEE - commune approximative via code postal</p>`
+                : '';
 
             header.innerHTML = `
                 <h3>${results.length} DPE trouvé${results.length > 1 ? 's' : ''}</h3>
                 <p>${cpText} - ${periode}</p>
                 ${geoInfo}
+                ${inseeWarning}
                 <div class="stats">
                     ${Object.entries(classeCount).map(([classe, count]) => `
                         <span class="stat-badge classe-${classe === 'N/A' ? 'NA' : classe}">${classe}: ${count}</span>
@@ -1510,7 +1611,12 @@
                 
                 // AMÉLIORATION: Affichage du nom de commune + code INSEE
                 const ville = dpe.commune || (dpe.code_postal_brut ? `CP ${dpe.code_postal_brut}` : 'Commune inconnue');
-                const codeInseeDisplay = dpe.code_insee ? `<div class="dpe-insee">INSEE: ${dpe.code_insee}</div>` : '';
+                const isCodePostalFallback = dpe.commune_needs_warning === true;
+                const warningIcon = isCodePostalFallback ? ' ⚠️' : '';
+                
+                const codeInseeDisplay = dpe.code_insee 
+                    ? `<div class="dpe-insee">INSEE: ${dpe.code_insee} ✅</div>` 
+                    : `<div class="dpe-insee" style="color: #ff9800;">Pas de code INSEE${warningIcon}</div>`;
                 
                 const distanceInfo = dpe.distance 
                     ? `<div class="dpe-distance">📏 ${dpe.distance} km</div>` 
@@ -1521,7 +1627,7 @@
                         <div class="dpe-header">
                             <div>
                                 <div class="dpe-address">📍 ${dpe.adresse_brut || 'Adresse non renseignée'}</div>
-                                <div class="dpe-city">🏙️ ${ville}</div>
+                                <div class="dpe-city">🏙️ ${ville}${warningIcon}</div>
                                 ${codeInseeDisplay}
                                 ${distanceInfo}
                             </div>
