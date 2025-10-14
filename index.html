@@ -1213,9 +1213,17 @@
                 </div>
             `;
 
+            // Debug: afficher un exemple de DPE dans la console
+            if (results.length > 0) {
+                console.log('🔍 DEBUG - Exemple de DPE reçu:', results[0]);
+                console.log('🔍 DEBUG - Champs disponibles:', Object.keys(results[0]));
+            }
+            
+            // Créer les filtres de ville
             const cities = {};
             results.forEach(dpe => {
-                const city = dpe.commune || 'Ville inconnue';
+                const city = dpe.commune || dpe.nom_commune || dpe.ville || dpe.libelle_commune || 
+                            (dpe.code_postal_brut ? `CP ${dpe.code_postal_brut}` : 'Ville inconnue');
                 cities[city] = (cities[city] || 0) + 1;
             });
 
@@ -1316,7 +1324,8 @@
 
             if (activeCityFilter) {
                 filtered = filtered.filter(dpe => {
-                    const city = dpe.commune || 'Ville inconnue';
+                    const city = dpe.commune || dpe.nom_commune || dpe.ville || dpe.libelle_commune || 
+                                (dpe.code_postal_brut ? `CP ${dpe.code_postal_brut}` : 'Ville inconnue');
                     return city === activeCityFilter;
                 });
             }
@@ -1359,6 +1368,10 @@
                 const note = dpeNotes[noteKey] || {};
                 const hasNote = note.status || note.comment;
                 
+                // Essayer différents champs pour la commune
+                const ville = dpe.commune || dpe.nom_commune || dpe.ville || dpe.libelle_commune || 
+                             (dpe.code_postal_brut ? `CP ${dpe.code_postal_brut}` : 'Ville inconnue');
+                
                 const distanceInfo = dpe.distance 
                     ? `<div class="dpe-distance">📏 ${dpe.distance} km</div>` 
                     : '';
@@ -1368,7 +1381,7 @@
                         <div class="dpe-header">
                             <div>
                                 <div class="dpe-address">📍 ${dpe.adresse_brut || 'Adresse non renseignée'}</div>
-                                <div class="dpe-city">🏙️ ${dpe.commune || 'Ville inconnue'}</div>
+                                <div class="dpe-city">🏙️ ${ville}</div>
                                 ${distanceInfo}
                             </div>
                             <span class="classe-badge classe-${dpe.classe_consommation_energie || 'NA'}">
