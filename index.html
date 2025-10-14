@@ -752,8 +752,10 @@
 
             <!-- Filtres par rue -->
             <div class="filter-section" id="filterSection" style="display: none;">
-                <h4>🏘️ Filtrer par rue</h4>
-                <div class="filter-buttons" id="streetFilters"></div>
+                <label for="streetSelect">🏘️ Filtrer par rue</label>
+                <select id="streetSelect" onchange="filterByStreet(this.value)">
+                    <option value="">Toutes les rues</option>
+                </select>
             </div>
             
             <div id="resultsList"></div>
@@ -1249,17 +1251,20 @@
             if (Object.keys(streets).length > 1) {
                 const filterSection = document.getElementById('filterSection');
                 filterSection.style.display = 'block';
-                const filterButtons = document.getElementById('streetFilters');
-                filterButtons.innerHTML = `
-                    <button class="filter-btn ${activeStreetFilter === '' ? 'active' : ''}" onclick="filterByStreet('')">
-                        Toutes (${results.length})
-                    </button>
-                    ${Object.entries(streets).map(([street, count]) => `
-                        <button class="filter-btn ${activeStreetFilter === street ? 'active' : ''}" onclick="filterByStreet('${street.replace(/'/g, "\\'")}')">
-                            ${street} (${count})
-                        </button>
-                    `).join('')}
-                `;
+                const streetSelect = document.getElementById('streetSelect');
+                
+                // Réinitialiser et remplir la liste déroulante
+                streetSelect.innerHTML = `<option value="">Toutes les rues (${results.length})</option>`;
+                
+                Object.entries(streets).sort().forEach(([street, count]) => {
+                    const option = document.createElement('option');
+                    option.value = street;
+                    option.textContent = `${street} (${count})`;
+                    if (activeStreetFilter === street) {
+                        option.selected = true;
+                    }
+                    streetSelect.appendChild(option);
+                });
             } else {
                 document.getElementById('filterSection').style.display = 'none';
             }
@@ -1295,13 +1300,6 @@
         function filterByStreet(street) {
             activeStreetFilter = street;
             applyFilters();
-            
-            document.querySelectorAll('#streetFilters .filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.includes(street) || (street === '' && btn.textContent.includes('Toutes'))) {
-                    btn.classList.add('active');
-                }
-            });
         }
 
         function filterBySurface(range) {
